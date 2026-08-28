@@ -40,7 +40,7 @@
     <span id="toast-msg">Acción realizada con éxito</span>
   </div>
 
-  <div class="w-full max-w-md bg-white min-h-screen flex flex-col shadow-2xl relative pb-20">
+  <div class="w-full max-w-5xl bg-white min-h-screen flex flex-col shadow-2xl relative pb-20 transition-all duration-300">
 
     <!-- MODAL DE INICIO DE SESIÓN -->
     <div id="login-modal" class="fixed inset-0 bg-zolimar-dark/95 backdrop-blur-sm z-50 flex items-center justify-center p-4">
@@ -324,7 +324,18 @@
         </div>
 
         <div class="space-y-3 bg-gray-50 p-3 rounded-xl border border-gray-200">
-          <div class="flex items-center justify-between">
+          <div>
+            <label class="text-[10px] font-bold text-gray-700 uppercase mb-1 block">Plato / Menú Asignado</label>
+            <select id="gsm-dietary-select" class="w-full text-xs p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-zolimar-gold outline-none bg-white font-semibold text-gray-800">
+              <option value="Standard">Menú Estándar</option>
+              <option value="Vegetariano">Vegetariano</option>
+              <option value="Vegano">Vegano</option>
+              <option value="Sin Gluten">Sin Gluten</option>
+              <option value="Infantil">Menú Infantil</option>
+            </select>
+          </div>
+
+          <div class="flex items-center justify-between border-t pt-2">
             <div class="flex items-center space-x-2">
               <i data-lucide="utensils" class="w-4 h-4 text-emerald-700"></i>
               <span class="text-xs font-bold text-gray-800">Comida Entregada</span>
@@ -343,20 +354,25 @@
 
         <div>
           <label class="text-[10px] font-bold text-gray-600 uppercase mb-1 block">Estado del Invitado</label>
-          <div class="grid grid-cols-3 gap-1 bg-gray-100 p-1 rounded-xl">
-            <button id="gsm-btn-pending" onclick="setGsmStatus('Pending')" class="py-2 text-[10px] font-bold rounded-lg border transition">
+          <p class="text-[9px] text-gray-400 mb-1 text-center italic">Haz clic en un estado para seleccionarlo directamente</p>
+          <div class="grid grid-cols-3 gap-1.5 bg-gray-100 p-1.5 rounded-xl">
+            <button id="gsm-btn-pending" type="button" onclick="setGsmStatus('Pending')" class="py-2 text-[10px] font-bold rounded-lg border transition cursor-pointer select-none">
               🔴 ROJO<br><span class="text-[9px] font-normal">Pendiente</span>
             </button>
-            <button id="gsm-btn-progress" onclick="setGsmStatus('In Progress')" class="py-2 text-[10px] font-bold rounded-lg border transition">
+            <button id="gsm-btn-progress" type="button" onclick="setGsmStatus('In Progress')" class="py-2 text-[10px] font-bold rounded-lg border transition cursor-pointer select-none">
               🟡 AMARILLO<br><span class="text-[9px] font-normal">En Proceso</span>
             </button>
-            <button id="gsm-btn-served" onclick="setGsmStatus('Served')" class="py-2 text-[10px] font-bold rounded-lg border transition">
+            <button id="gsm-btn-served" type="button" onclick="setGsmStatus('Served')" class="py-2 text-[10px] font-bold rounded-lg border transition cursor-pointer select-none">
               🔘 PLOMO<br><span class="text-[9px] font-normal">Servido</span>
             </button>
           </div>
         </div>
 
-        <button onclick="saveGuestServiceState()" class="w-full bg-zolimar-dark text-zolimar-gold font-bold py-2.5 rounded-xl text-xs hover:bg-zolimar-green transition shadow-md flex items-center justify-center space-x-1">
+        <div id="gsm-lock-notice" class="hidden bg-emerald-50 border border-emerald-300 rounded-xl px-3 py-2 text-[11px] text-emerald-800 font-semibold text-center">
+          ✅ Servicio ya confirmado. No se puede modificar.
+        </div>
+
+        <button id="gsm-save-btn" onclick="saveGuestServiceState()" class="w-full bg-zolimar-dark text-zolimar-gold font-bold py-2.5 rounded-xl text-xs hover:bg-zolimar-green transition shadow-md flex items-center justify-center space-x-1">
           <i data-lucide="check" class="w-4 h-4"></i>
           <span>Guardar Servicio</span>
         </button>
@@ -469,111 +485,167 @@
       </div>
     </div>
 
-    <!-- 2. DETALLE DE MESA -->
+    <!-- 2. DETALLE DE MESA (OPTIMIZADO PARA TABLET / 720p / MÓVIL) -->
     <div id="view-table-detail" class="flex-1 flex flex-col hidden overflow-y-auto">
       <header class="bg-white border-b px-4 py-3 flex items-center justify-between shadow-sm sticky top-0 z-30">
-        <button onclick="navigate('dashboard')" class="text-blue-600 flex items-center text-sm font-semibold">
-          <i data-lucide="chevron-left" class="w-5 h-5 mr-0.5"></i> Volver
+        <button onclick="navigate('dashboard')" class="text-emerald-800 hover:text-emerald-950 flex items-center text-sm font-bold bg-emerald-50 px-3 py-1.5 rounded-xl border border-emerald-200">
+          <i data-lucide="chevron-left" class="w-4 h-4 mr-1"></i> Volver a Mesas
         </button>
-        <h2 id="detail-table-title" class="font-bold text-gray-800 text-sm">Mesa 1 - Vista Detallada</h2>
-        <div class="w-10"></div>
+        <div class="text-center">
+          <h2 id="detail-table-title" class="font-extrabold text-gray-900 text-sm sm:text-base">Mesa 1</h2>
+          <span id="detail-table-badge" class="text-[10px] bg-amber-100 text-amber-900 font-bold px-2 py-0.5 rounded-full">0/10 Servidos</span>
+        </div>
+        <!-- Navegación Rápida entre Mesas -->
+        <div class="flex items-center space-x-1">
+          <button onclick="changeSelectedTable(-1)" title="Mesa Anterior" class="p-1.5 rounded-lg bg-gray-100 text-gray-700 hover:bg-gray-200">
+            <i data-lucide="chevron-left" class="w-4 h-4"></i>
+          </button>
+          <button onclick="changeSelectedTable(1)" title="Mesa Siguiente" class="p-1.5 rounded-lg bg-gray-100 text-gray-700 hover:bg-gray-200">
+            <i data-lucide="chevron-right" class="w-4 h-4"></i>
+          </button>
+        </div>
       </header>
 
-      <div class="relative bg-gradient-to-b from-emerald-50 via-amber-50 to-orange-50 flex items-center justify-center p-4">
-        <div class="relative w-72 h-72 flex items-center justify-center">
-          <div class="w-36 h-36 rounded-full bg-amber-900 border-4 border-amber-950 flex items-center justify-center shadow-2xl z-10 text-center text-white">
-            <div>
-              <i data-lucide="flower" class="w-6 h-6 text-pink-300 mx-auto"></i>
-              <div id="detail-center-table-num" class="text-xs font-bold mt-0.5">Mesa 1</div>
-            </div>
-          </div>
-          <div id="detail-chairs-container" class="absolute inset-0"></div>
+      <!-- BARRA DE CONSULTA Y FILTRO VISUAL EN LA MESA (NO MODIFICA LA BD) -->
+      <div class="bg-gradient-to-r from-gray-900 to-zolimar-dark text-white px-3 py-2 border-b border-zolimar-gold/40 flex flex-wrap items-center justify-center gap-1.5 sm:gap-2">
+        <div class="flex items-center space-x-1 text-[11px] text-zolimar-gold font-bold mr-1">
+          <i data-lucide="filter" class="w-3.5 h-3.5"></i>
+          <span>Filtro de Consulta:</span>
         </div>
+        <button id="seat-filter-all" onclick="setSeatVisualFilter('all')" class="px-2.5 py-1 rounded-lg text-[11px] font-bold transition shadow bg-zolimar-gold text-zolimar-dark">
+          🌟 Todos (<span id="count-seat-all">0</span>)
+        </button>
+        <button id="seat-filter-pending" onclick="setSeatVisualFilter('pending')" class="px-2.5 py-1 rounded-lg text-[11px] font-bold transition shadow bg-white/10 text-red-300 hover:bg-white/20 border border-red-500/30">
+          🔴 Pendientes (<span id="count-seat-pending">0</span>)
+        </button>
+        <button id="seat-filter-progress" onclick="setSeatVisualFilter('progress')" class="px-2.5 py-1 rounded-lg text-[11px] font-bold transition shadow bg-white/10 text-yellow-300 hover:bg-white/20 border border-yellow-500/30">
+          🟡 En Proceso (<span id="count-seat-progress">0</span>)
+        </button>
+        <button id="seat-filter-served" onclick="setSeatVisualFilter('served')" class="px-2.5 py-1 rounded-lg text-[11px] font-bold transition shadow bg-white/10 text-gray-300 hover:bg-white/20 border border-gray-400/30">
+          🔘 Servidos (<span id="count-seat-served">0</span>)
+        </button>
       </div>
 
-      <!-- PANEL DE CONTROL DE SERVICIOS Y MENÚ -->
-      <div class="bg-white p-4 space-y-4 shadow-lg">
-        <div class="text-center">
-          <span class="text-xs font-bold text-gray-600 uppercase tracking-wider block mb-1">Estado General del Servicio</span>
-          <div class="grid grid-cols-3 gap-1.5 bg-gray-100 p-1.5 rounded-xl border">
-            <button id="btn-status-pending" onclick="updateTableService('Pending')" class="py-2 text-xs font-bold rounded-lg transition shadow-sm">
-              🔴 Pending
-            </button>
-            <button id="btn-status-progress" onclick="updateTableService('In Progress')" class="py-2 text-xs font-bold rounded-lg transition shadow-sm">
-              🟡 In Progress
-            </button>
-            <button id="btn-status-served" onclick="updateTableService('Served')" class="py-2 text-xs font-bold rounded-lg transition shadow-sm">
-              🔘 Served
-            </button>
+      <!-- CONTENIDO PRINCIPAL: DISTRIBUCIÓN RESPONSIVA TABLET / 720p (2 COLUMNAS) -->
+      <div class="flex-1 flex flex-col md:grid md:grid-cols-12 md:gap-4 md:p-4 bg-gray-50">
+        
+        <!-- COLUMNA IZQUIERDA: DIAGRAMA CIRCULAR DE MESA INTERACTIVA -->
+        <div id="detail-table-diagram-container" class="md:col-span-7 flex flex-col items-center justify-center p-3 sm:p-5 bg-gradient-to-b from-emerald-50/60 via-amber-50/50 to-orange-50/60 md:rounded-2xl md:border md:border-amber-200/80 shadow-sm relative min-h-[420px]">
+          <div class="w-full flex justify-between items-center text-[10px] text-gray-500 font-semibold px-2 mb-1">
+            <span class="flex items-center space-x-1"><i data-lucide="utensils" class="w-3 h-3 text-emerald-600"></i><span>🍽️ Verde = Comida</span></span>
+            <span class="flex items-center space-x-1"><i data-lucide="wine" class="w-3 h-3 text-blue-600"></i><span>🥤 Azul = Bebida</span></span>
           </div>
+
+          <!-- Mesa Circular con Radio Táctil Dinámico -->
+          <div class="relative w-72 h-72 sm:w-84 sm:h-84 md:w-96 md:h-96 flex items-center justify-center my-2 select-none">
+            <!-- Centro de la Mesa -->
+            <div class="w-32 h-32 sm:w-36 sm:h-36 md:w-40 md:h-40 rounded-full bg-gradient-to-br from-amber-900 to-amber-950 border-4 border-amber-800 flex items-center justify-center shadow-2xl z-10 text-center text-white p-2">
+              <div>
+                <i data-lucide="flower" class="w-5 h-5 sm:w-6 sm:h-6 text-pink-300 mx-auto"></i>
+                <div id="detail-center-table-num" class="text-xs sm:text-sm font-extrabold text-zolimar-gold mt-0.5">Mesa 1</div>
+                <div id="detail-center-progress-text" class="text-[9px] sm:text-[10px] text-amber-200 font-semibold">0/10 Servidos</div>
+              </div>
+            </div>
+            <!-- Contenedor de Sillas Dinámicas con Íconos Táctiles -->
+            <div id="detail-chairs-container" class="absolute inset-0"></div>
+          </div>
+
+          <p class="text-[10px] text-gray-500 text-center mt-1 italic">
+            👆 Toca cualquier silla para registrar entregas o cambiar el estado del comensal.
+          </p>
         </div>
 
-        <!-- SECCIÓN DE COMIDA Y BEBIDA CON SELECCIÓN DE TIPO -->
-        <div class="space-y-3 pt-1">
+        <!-- COLUMNA DERECHA: GESTIÓN DEL CATÁLOGO DE MENÚ DEL DÍA Y SERVICIOS (SOLO ADMINISTRADOR) -->
+        <div id="admin-service-catalog-panel" class="md:col-span-5 flex flex-col space-y-3 p-3 md:p-0">
           
-          <!-- SECCIÓN DE COMIDA -->
-          <div class="p-3.5 bg-emerald-50/70 rounded-2xl border border-emerald-200 space-y-2.5">
-            <div class="flex items-center justify-between">
+          <div class="bg-gradient-to-r from-amber-600 to-amber-800 text-white px-3 py-2 rounded-xl shadow flex items-center justify-between text-xs font-bold">
+            <span class="flex items-center space-x-1.5">
+              <i data-lucide="shield-check" class="w-4 h-4 text-zolimar-gold"></i>
+              <span>ESTADO GENERAL Y CREACIÓN DE PLATOS/BEBIDAS</span>
+            </span>
+            <span class="text-[9px] bg-white/20 px-2 py-0.5 rounded-full font-bold">Solo Admin</span>
+          </div>
+          
+          <!-- TARJETA 1: SERVICIO Y CATÁLOGO DE COMIDA DEL DÍA -->
+          <div class="p-3.5 bg-emerald-50/80 rounded-2xl border border-emerald-200 shadow-sm space-y-2.5">
+            <div class="flex items-center justify-between border-b border-emerald-200/60 pb-2">
               <div class="flex items-center space-x-2">
-                <i data-lucide="utensils" class="w-4 h-4 text-emerald-800"></i>
-                <span class="text-xs font-bold text-emerald-950">Servicio de Comida</span>
+                <div class="w-7 h-7 bg-emerald-600 text-white rounded-lg flex items-center justify-center shadow">
+                  <i data-lucide="utensils" class="w-4 h-4"></i>
+                </div>
+                <div>
+                  <h3 class="text-xs font-bold text-emerald-950">Catálogo de Comida del Día</h3>
+                  <p class="text-[9px] text-emerald-700">Platos disponibles para este evento</p>
+                </div>
               </div>
-              <input id="food-toggle" type="checkbox" onchange="updateTableToggles()" class="w-5 h-5 accent-emerald-600 cursor-pointer">
+              <div class="flex items-center space-x-1.5">
+                <span id="food-admin-badge" class="hidden text-[9px] bg-amber-100 text-amber-800 border border-amber-300 px-1.5 py-0.5 rounded-full font-bold">🔒 Solo Admin</span>
+                <input id="food-toggle" type="checkbox" onchange="updateTableToggles()" title="Activar/Desactivar Servicio de Comida" class="w-5 h-5 accent-emerald-600 cursor-pointer">
+              </div>
             </div>
 
+            <!-- Lista de Platos Activos del Día -->
             <div>
-              <label class="text-[10px] font-bold text-gray-600 uppercase">Menú / Plato a Servir</label>
-              <div class="flex space-x-2 mt-1">
-                <input id="food-type-input" type="text" placeholder="Ej. Lomo Saltado, Vegetariano..." 
-                       onchange="updateTableTypes()"
-                       class="flex-1 text-xs p-2 border border-emerald-300 rounded-lg focus:ring-2 focus:ring-emerald-500 outline-none bg-white">
-                <button onclick="updateTableTypes()" class="bg-emerald-700 text-white text-xs font-bold px-3 py-1.5 rounded-lg hover:bg-emerald-800 transition active:scale-95">
-                  Guardar
-                </button>
+              <span class="text-[9px] font-bold text-gray-600 uppercase block mb-1">Opciones Disponibles:</span>
+              <div id="food-catalog-pills" class="flex flex-wrap gap-1.5 min-h-[32px]">
+                <!-- Se pobla dinámicamente desde el catálogo -->
               </div>
-              <!-- Presets Rápidos de Comida -->
-              <div class="flex flex-wrap gap-1.5 mt-2">
-                <button type="button" onclick="setFoodType('Menú Estándar')" class="text-[10px] bg-emerald-100 text-emerald-900 border border-emerald-300 px-2.5 py-1 rounded-lg hover:bg-emerald-200 font-bold active:scale-95 transition">Estándar</button>
-                <button type="button" onclick="setFoodType('Vegetariano')" class="text-[10px] bg-emerald-100 text-emerald-900 border border-emerald-300 px-2.5 py-1 rounded-lg hover:bg-emerald-200 font-bold active:scale-95 transition">Vegetariano</button>
-                <button type="button" onclick="setFoodType('Vegano')" class="text-[10px] bg-emerald-100 text-emerald-900 border border-emerald-300 px-2.5 py-1 rounded-lg hover:bg-emerald-200 font-bold active:scale-95 transition">Vegano</button>
-                <button type="button" onclick="setFoodType('Sin Gluten')" class="text-[10px] bg-emerald-100 text-emerald-900 border border-emerald-300 px-2.5 py-1 rounded-lg hover:bg-emerald-200 font-bold active:scale-95 transition">Sin Gluten</button>
-                <button type="button" onclick="setFoodType('Menú Infantil')" class="text-[10px] bg-emerald-100 text-emerald-900 border border-emerald-300 px-2.5 py-1 rounded-lg hover:bg-emerald-200 font-bold active:scale-95 transition">Infantil</button>
+            </div>
+
+            <!-- Formulario para agregar plato al catálogo (Solo Administrador) -->
+            <div id="admin-food-catalog-form" class="hidden pt-1 border-t border-emerald-200/60">
+              <label class="text-[9px] font-bold text-emerald-900 uppercase block mb-1">+ Agregar Plato al Catálogo:</label>
+              <div class="flex space-x-1.5">
+                <input id="new-food-catalog-input" type="text" placeholder="Ej. Lomo Saltado Criollo..." class="flex-1 text-xs p-1.5 border border-emerald-300 rounded-lg focus:ring-2 focus:ring-emerald-500 outline-none bg-white">
+                <button onclick="addCatalogItem('food')" class="bg-emerald-700 text-white text-[10px] font-bold px-2.5 py-1.5 rounded-lg hover:bg-emerald-800 transition shadow active:scale-95 flex items-center space-x-1">
+                  <i data-lucide="plus" class="w-3.5 h-3.5"></i>
+                  <span>Agregar</span>
+                </button>
               </div>
             </div>
           </div>
 
-          <!-- SECCIÓN DE BEBIDA -->
-          <div class="p-3.5 bg-blue-50/70 rounded-2xl border border-blue-200 space-y-2.5">
-            <div class="flex items-center justify-between">
+          <!-- TARJETA 2: SERVICIO Y CATÁLOGO DE BEBIDAS Y LICORES DEL DÍA -->
+          <div class="p-3.5 bg-blue-50/80 rounded-2xl border border-blue-200 shadow-sm space-y-2.5">
+            <div class="flex items-center justify-between border-b border-blue-200/60 pb-2">
               <div class="flex items-center space-x-2">
-                <i data-lucide="wine" class="w-4 h-4 text-blue-800"></i>
-                <span class="text-xs font-bold text-blue-950">Servicio de Bebida & Licores</span>
+                <div class="w-7 h-7 bg-blue-600 text-white rounded-lg flex items-center justify-center shadow">
+                  <i data-lucide="wine" class="w-4 h-4"></i>
+                </div>
+                <div>
+                  <h3 class="text-xs font-bold text-blue-950">Catálogo de Bebidas & Licores</h3>
+                  <p class="text-[9px] text-blue-700">Licores y bebidas disponibles</p>
+                </div>
               </div>
-              <input id="drink-toggle" type="checkbox" onchange="updateTableToggles()" class="w-5 h-5 accent-blue-600 cursor-pointer">
+              <div class="flex items-center space-x-1.5">
+                <span id="drink-admin-badge" class="hidden text-[9px] bg-amber-100 text-amber-800 border border-amber-300 px-1.5 py-0.5 rounded-full font-bold">🔒 Solo Admin</span>
+                <input id="drink-toggle" type="checkbox" onchange="updateTableToggles()" title="Activar/Desactivar Servicio de Bebidas" class="w-5 h-5 accent-blue-600 cursor-pointer">
+              </div>
             </div>
 
+            <!-- Lista de Bebidas Activas del Día -->
             <div>
-              <label class="text-[10px] font-bold text-gray-600 uppercase">Bebida / Licores a Servir</label>
-              <div class="flex space-x-2 mt-1">
-                <input id="drink-type-input" type="text" placeholder="Ej. Vino Tinto, Cerveza, Cocteles..." 
-                       onchange="updateTableTypes()"
-                       class="flex-1 text-xs p-2 border border-blue-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none bg-white">
-                <button onclick="updateTableTypes()" class="bg-blue-700 text-white text-xs font-bold px-3 py-1.5 rounded-lg hover:bg-blue-800 transition active:scale-95">
-                  Guardar
-                </button>
+              <span class="text-[9px] font-bold text-gray-600 uppercase block mb-1">Opciones Disponibles:</span>
+              <div id="drink-catalog-pills" class="flex flex-wrap gap-1.5 min-h-[32px]">
+                <!-- Se pobla dinámicamente desde el catálogo -->
               </div>
-              <!-- Presets Rápidos de Bebida -->
-              <div class="flex flex-wrap gap-1.5 mt-2">
-                <button type="button" onclick="setDrinkType('Agua & Gaseosa')" class="text-[10px] bg-blue-100 text-blue-900 border border-blue-300 px-2.5 py-1 rounded-lg hover:bg-blue-200 font-bold active:scale-95 transition">Agua & Gaseosa</button>
-                <button type="button" onclick="setDrinkType('Vino Tinto / Blanco')" class="text-[10px] bg-blue-100 text-blue-900 border border-blue-300 px-2.5 py-1 rounded-lg hover:bg-blue-200 font-bold active:scale-95 transition">Vinos</button>
-                <button type="button" onclick="setDrinkType('Cerveza Artesanal')" class="text-[10px] bg-blue-100 text-blue-900 border border-blue-300 px-2.5 py-1 rounded-lg hover:bg-blue-200 font-bold active:scale-95 transition">Cerveza</button>
-                <button type="button" onclick="setDrinkType('Coctelería Zolimar')" class="text-[10px] bg-blue-100 text-blue-900 border border-blue-300 px-2.5 py-1 rounded-lg hover:bg-blue-200 font-bold active:scale-95 transition">Cocteles</button>
-                <button type="button" onclick="setDrinkType('Whisky & Bar Libre')" class="text-[10px] bg-blue-100 text-blue-900 border border-blue-300 px-2.5 py-1 rounded-lg hover:bg-blue-200 font-bold active:scale-95 transition">Whisky & Bar</button>
+            </div>
+
+            <!-- Formulario para agregar bebida al catálogo (Solo Administrador) -->
+            <div id="admin-drink-catalog-form" class="hidden pt-1 border-t border-blue-200/60">
+              <label class="text-[9px] font-bold text-blue-900 uppercase block mb-1">+ Agregar Bebida al Catálogo:</label>
+              <div class="flex space-x-1.5">
+                <input id="new-drink-catalog-input" type="text" placeholder="Ej. Pisco Sour Catedral..." class="flex-1 text-xs p-1.5 border border-blue-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none bg-white">
+                <button onclick="addCatalogItem('drink')" class="bg-blue-700 text-white text-[10px] font-bold px-2.5 py-1.5 rounded-lg hover:bg-blue-800 transition shadow active:scale-95 flex items-center space-x-1">
+                  <i data-lucide="plus" class="w-3.5 h-3.5"></i>
+                  <span>Agregar</span>
+                </button>
               </div>
             </div>
           </div>
 
         </div>
+
       </div>
     </div>
 
@@ -628,7 +700,7 @@
     </div>
 
     <!-- NAVEGACIÓN INFERIOR -->
-    <nav class="fixed bottom-0 max-w-md w-full bg-zolimar-dark text-gray-300 flex justify-around py-2 border-t border-zolimar-gold/30 z-40">
+    <nav class="fixed bottom-0 max-w-5xl w-full bg-zolimar-dark text-gray-300 flex justify-around py-2 border-t border-zolimar-gold/30 z-40 left-1/2 -translate-x-1/2">
       <button onclick="navigate('dashboard')" id="nav-btn-dashboard" class="flex flex-col items-center text-zolimar-gold text-[10px]">
         <i data-lucide="gauge" class="w-5 h-5 mb-0.5"></i><span>Dashboard</span>
       </button>
@@ -646,13 +718,14 @@
     const socket = io();
     let authToken = localStorage.getItem('token');
     let currentUser = null;
-    let eventData = { tables: [], guests: [] };
+    let eventData = { tables: [], guests: [], menuCatalog: [] };
     let selectedTableId = 1;
     let currentSearchTerm = '';
     let selectedGuestForModal = null;
     let gsmCurrentStatus = 'Pending';
     let attCurrentFilter = 'all';
     let fdCurrentFilter = 'all';
+    let currentSeatVisualFilter = 'all';
 
     socket.on('refresh-data', () => fetchEventData());
 
@@ -950,16 +1023,68 @@
     }
 
     function openGuestServiceModal(guest, tableId, seatNum) {
-      selectedGuestForModal = guest || { id: null, name: `Invitado Silla ${seatNum}`, table_id: tableId, seat: seatNum, status: 'Pending', food_served: 0, drink_served: 0 };
+      selectedGuestForModal = guest || { id: null, name: `Invitado Silla ${seatNum}`, table_id: tableId, seat: seatNum, status: 'Pending', food_served: 0, drink_served: 0, dietary: 'Menú Estándar' };
       
       document.getElementById('gsm-guest-name').innerText = selectedGuestForModal.name || `Silla ${seatNum}`;
       document.getElementById('gsm-seat-badge').innerText = `Silla ${seatNum}`;
       document.getElementById('gsm-table-info').innerText = `Mesa ${tableId} - Control de Servicio`;
-      
-      document.getElementById('gsm-food-check').checked = !!selectedGuestForModal.food_served;
-      document.getElementById('gsm-drink-check').checked = !!selectedGuestForModal.drink_served;
 
-      setGsmStatusUI(selectedGuestForModal.status || 'Pending');
+      const foodCheck = document.getElementById('gsm-food-check');
+      const drinkCheck = document.getElementById('gsm-drink-check');
+      const dietarySelect = document.getElementById('gsm-dietary-select');
+      const saveBtn = document.getElementById('gsm-save-btn');
+      const lockNotice = document.getElementById('gsm-lock-notice');
+
+      foodCheck.checked = !!selectedGuestForModal.food_served;
+      drinkCheck.checked = !!selectedGuestForModal.drink_served;
+
+      // Poblar dinámicamente las opciones del catálogo del día
+      if (dietarySelect) {
+        dietarySelect.innerHTML = '';
+        const foodOptions = (eventData.menuCatalog || []).filter(item => item.category === 'food');
+        const defaultOptions = foodOptions.length > 0 ? foodOptions.map(f => f.name) : ['Menú Estándar', 'Lomo Saltado Gourmet', 'Vegetariano', 'Vegano', 'Sin Gluten', 'Menú Infantil'];
+        
+        // Asegurar que la opción actual del invitado esté en la lista
+        const currentDiet = selectedGuestForModal.dietary || 'Menú Estándar';
+        if (!defaultOptions.includes(currentDiet)) {
+          defaultOptions.unshift(currentDiet);
+        }
+
+        defaultOptions.forEach(opt => {
+          const optElem = document.createElement('option');
+          optElem.value = opt;
+          optElem.innerText = opt;
+          if (opt === currentDiet) optElem.selected = true;
+          dietarySelect.appendChild(optElem);
+        });
+      }
+
+      // Calcular estado automáticamente desde entregas (no desde el campo status)
+      const food = !!selectedGuestForModal.food_served;
+      const drink = !!selectedGuestForModal.drink_served;
+      let autoStatus = 'Pending';
+      if (food && drink) autoStatus = 'Served';
+      else if (food || drink) autoStatus = 'In Progress';
+      setGsmStatusUI(autoStatus);
+
+      // SEGURIDAD: Bloquear si ya está completamente servido y el usuario es MESERO
+      const isFullyServed = selectedGuestForModal.food_served === 1 && selectedGuestForModal.drink_served === 1;
+      const isWaiter = currentUser && currentUser.role !== 'ADMIN';
+
+      if (isFullyServed && isWaiter) {
+        foodCheck.disabled = true;
+        drinkCheck.disabled = true;
+        if (dietarySelect) { dietarySelect.disabled = true; dietarySelect.classList.add('bg-gray-100', 'cursor-not-allowed'); }
+        if (saveBtn) { saveBtn.disabled = true; saveBtn.classList.add('opacity-50', 'cursor-not-allowed'); }
+        if (lockNotice) lockNotice.classList.remove('hidden');
+      } else {
+        foodCheck.disabled = false;
+        drinkCheck.disabled = false;
+        if (dietarySelect) { dietarySelect.disabled = false; dietarySelect.classList.remove('bg-gray-100', 'cursor-not-allowed'); }
+        if (saveBtn) { saveBtn.disabled = false; saveBtn.classList.remove('opacity-50', 'cursor-not-allowed'); }
+        if (lockNotice) lockNotice.classList.add('hidden');
+      }
+
       document.getElementById('guest-service-modal').classList.remove('hidden');
       lucide.createIcons();
     }
@@ -976,6 +1101,8 @@
         setGsmStatusUI('Served');
       } else if (food || drink) {
         setGsmStatusUI('In Progress');
+      } else {
+        setGsmStatusUI('Pending');
       }
     }
 
@@ -1011,9 +1138,14 @@
 
     async function saveGuestServiceState() {
       if (!selectedGuestForModal) return;
+      const saveBtn = document.getElementById('gsm-save-btn');
+      if (saveBtn && saveBtn.disabled) return;
+
       const food_served = document.getElementById('gsm-food-check').checked ? 1 : 0;
       const drink_served = document.getElementById('gsm-drink-check').checked ? 1 : 0;
-      const status = gsmCurrentStatus;
+      const dietarySelect = document.getElementById('gsm-dietary-select');
+      const dietary = dietarySelect ? dietarySelect.value : (selectedGuestForModal.dietary || 'Standard');
+      const tag = dietary.toLowerCase().includes('vege') ? 'Vegetarian' : (dietary.toLowerCase().includes('vega') ? 'Vegano' : 'Standard');
 
       if (!selectedGuestForModal.id) {
         const res = await fetch('/api/guests/create', {
@@ -1023,7 +1155,8 @@
             name: selectedGuestForModal.name, 
             table_id: selectedGuestForModal.table_id, 
             seat: selectedGuestForModal.seat, 
-            dietary: 'Standard' 
+            dietary: dietary,
+            tag: tag
           })
         });
         const data = await res.json();
@@ -1033,16 +1166,25 @@
       }
 
       if (selectedGuestForModal.id) {
-        await fetch('/api/guests/status', {
+        const res = await fetch('/api/guests/status', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${authToken}` },
           body: JSON.stringify({ 
             guestId: selectedGuestForModal.id, 
-            status: status, 
+            status: gsmCurrentStatus,
             food_served: food_served, 
-            drink_served: drink_served 
+            drink_served: drink_served,
+            dietary: dietary,
+            tag: tag
           })
         });
+        const data = await res.json();
+        if (!res.ok) {
+          showToast(data.error || 'Error al guardar servicio');
+          closeGuestServiceModal();
+          fetchEventData();
+          return;
+        }
         showToast(`Servicio guardado para ${selectedGuestForModal.name}`);
       }
 
@@ -1326,13 +1468,35 @@
       lucide.createIcons();
     }
 
+    // Navegar entre mesas con botones rápida
+    function changeSelectedTable(delta) {
+      let nextId = selectedTableId + delta;
+      if (nextId < 1) nextId = 20;
+      if (nextId > 20) nextId = 1;
+      openTableDetail(nextId);
+    }
+
+    // Filtro visual de consulta en mesa (NO altera BD)
+    function setSeatVisualFilter(filter) {
+      currentSeatVisualFilter = filter;
+      
+      const bAll = document.getElementById('seat-filter-all');
+      const bPend = document.getElementById('seat-filter-pending');
+      const bProg = document.getElementById('seat-filter-progress');
+      const bServ = document.getElementById('seat-filter-served');
+
+      if (bAll) bAll.className = filter === 'all' ? 'px-2.5 py-1 rounded-lg text-[11px] font-bold transition shadow bg-zolimar-gold text-zolimar-dark' : 'px-2.5 py-1 rounded-lg text-[11px] font-bold transition shadow bg-white/10 text-gray-300 hover:bg-white/20 border border-gray-400/30';
+      if (bPend) bPend.className = filter === 'pending' ? 'px-2.5 py-1 rounded-lg text-[11px] font-bold transition shadow bg-red-600 text-white' : 'px-2.5 py-1 rounded-lg text-[11px] font-bold transition shadow bg-white/10 text-red-300 hover:bg-white/20 border border-red-500/30';
+      if (bProg) bProg.className = filter === 'progress' ? 'px-2.5 py-1 rounded-lg text-[11px] font-bold transition shadow bg-amber-500 text-gray-950 font-extrabold' : 'px-2.5 py-1 rounded-lg text-[11px] font-bold transition shadow bg-white/10 text-yellow-300 hover:bg-white/20 border border-yellow-500/30';
+      if (bServ) bServ.className = filter === 'served' ? 'px-2.5 py-1 rounded-lg text-[11px] font-bold transition shadow bg-gray-600 text-white' : 'px-2.5 py-1 rounded-lg text-[11px] font-bold transition shadow bg-white/10 text-gray-300 hover:bg-white/20 border border-gray-400/30';
+
+      renderTableSeats();
+    }
+
     function openTableDetail(tableId) {
       selectedTableId = tableId;
-      document.getElementById('detail-table-title').innerText = `Mesa ${tableId} - Vista Detallada`;
+      document.getElementById('detail-table-title').innerText = `Mesa ${tableId}`;
       document.getElementById('detail-center-table-num').innerText = `Mesa ${tableId}`;
-
-      const container = document.getElementById('detail-chairs-container');
-      container.innerHTML = '';
 
       const table = eventData.tables.find(t => t.id === tableId) || { 
         service_status: 'Pending', 
@@ -1341,74 +1505,252 @@
         food_type: 'Menú Estándar',
         drink_type: 'Agua & Gaseosa'
       };
-      
-      updateStatusUI(table.service_status);
-      document.getElementById('food-toggle').checked = !!table.food_service;
-      document.getElementById('drink-toggle').checked = !!table.drink_service;
-      document.getElementById('food-type-input').value = table.food_type || 'Menú Estándar';
-      document.getElementById('drink-type-input').value = table.drink_type || 'Agua & Gaseosa';
 
-      const guests = eventData.guests.filter(g => g.table_id === tableId);
+      const foodToggle = document.getElementById('food-toggle');
+      const drinkToggle = document.getElementById('drink-toggle');
+      if (foodToggle) foodToggle.checked = !!table.food_service;
+      if (drinkToggle) drinkToggle.checked = !!table.drink_service;
 
-      for (let i = 0; i < 10; i++) {
-        const seatNum = String(i + 1);
-        const angle = (i / 10) * (2 * Math.PI) - Math.PI / 2;
-        const x = 144 + 105 * Math.cos(angle) - 24;
-        const y = 144 + 105 * Math.sin(angle) - 24;
-        
-        const guest = guests.find(g => String(g.seat) === seatNum) || { id: null, name: `Silla ${seatNum}`, table_id: tableId, seat: seatNum, tag: 'Libre', status: 'Pending', food_served: 0, drink_served: 0 };
-
-        let color = 'bg-red-500 border-red-700 text-white';
-        let statusTag = 'Pendiente';
-
-        if (guest.status === 'In Progress' || guest.status === 'Checked In') {
-          color = 'bg-yellow-400 border-yellow-600 text-gray-900';
-          statusTag = 'En Proceso';
-        }
-        if (guest.status === 'Served' || (guest.food_served === 1 && guest.drink_served === 1)) {
-          color = 'bg-gray-400 border-gray-600 text-white';
-          statusTag = 'Servido (Plomo)';
-        }
-
-        let foodBadge = guest.food_served ? '🍲' : '';
-        let drinkBadge = guest.drink_served ? '🥤' : '';
-
-        const chair = document.createElement('div');
-        chair.style.left = `${x}px`;
-        chair.style.top = `${y}px`;
-        chair.className = `absolute w-12 h-12 rounded-xl ${color} border-2 shadow flex flex-col items-center justify-center p-1 text-center cursor-pointer transition transform hover:scale-110 z-20`;
-        
-        chair.onclick = () => openGuestServiceModal(guest, tableId, seatNum);
-
-        chair.innerHTML = `
-          <span class="text-[8px] font-bold truncate w-full">${guest.name}</span>
-          <span class="text-[6px] uppercase font-semibold leading-tight">${foodBadge}${drinkBadge} ${statusTag}</span>
-        `;
-        container.appendChild(chair);
-      }
-
+      renderTableSeats();
+      renderMenuCatalogControls();
       navigate('table-detail');
     }
 
-    function setFoodType(type) {
-      document.getElementById('food-type-input').value = type;
-      updateTableTypes();
+    // Renderiza las 10 sillas de la mesa con Íconos Táctiles de Platos, Cubiertos y Vasos
+    function renderTableSeats() {
+      const container = document.getElementById('detail-chairs-container');
+      if (!container) return;
+      container.innerHTML = '';
+
+      const guests = eventData.guests.filter(g => g.table_id === selectedTableId);
+
+      // Conteo de estados para la barra de consulta y progreso
+      let countPending = 0;
+      let countProgress = 0;
+      let countServed = 0;
+
+      for (let i = 0; i < 10; i++) {
+        const seatNum = String(i + 1);
+        const guest = guests.find(g => String(g.seat) === seatNum);
+        const isFoodServed = guest && guest.food_served === 1;
+        const isDrinkServed = guest && guest.drink_served === 1;
+
+        if (isFoodServed && isDrinkServed) {
+          countServed++;
+        } else if (isFoodServed || isDrinkServed) {
+          countProgress++;
+        } else {
+          countPending++;
+        }
+      }
+
+      // Actualizar contadores de consulta visual
+      const cAll = document.getElementById('count-seat-all');
+      const cPend = document.getElementById('count-seat-pending');
+      const cProg = document.getElementById('count-seat-progress');
+      const cServ = document.getElementById('count-seat-served');
+      if (cAll) cAll.innerText = '10';
+      if (cPend) cPend.innerText = countPending;
+      if (cProg) cProg.innerText = countProgress;
+      if (cServ) cServ.innerText = countServed;
+
+      // Actualizar badge de progreso en cabecera y centro de mesa
+      const progressText = `${countServed}/10 Servidos`;
+      const badge = document.getElementById('detail-table-badge');
+      const centerProgress = document.getElementById('detail-center-progress-text');
+      if (badge) badge.innerText = progressText;
+      if (centerProgress) centerProgress.innerText = progressText;
+
+      // Renderizar 10 posiciones circulares alrededor de la mesa
+      for (let i = 0; i < 10; i++) {
+        const seatNum = String(i + 1);
+        const angle = (i / 10) * (2 * Math.PI) - Math.PI / 2;
+        
+        // Coordenadas calculadas para el contenedor responsive (porcentual para centrado exacto)
+        const radiusPct = 40; // % desde el centro
+        const leftPct = 50 + radiusPct * Math.cos(angle);
+        const topPct = 50 + radiusPct * Math.sin(angle);
+
+        const guest = guests.find(g => String(g.seat) === seatNum) || { 
+          id: null, 
+          name: `Silla ${seatNum}`, 
+          table_id: selectedTableId, 
+          seat: seatNum, 
+          dietary: 'Menú Estándar',
+          status: 'Pending', 
+          food_served: 0, 
+          drink_served: 0 
+        };
+
+        const isFood = !!guest.food_served;
+        const isDrink = !!guest.drink_served;
+        
+        let seatStatus = 'pending';
+        let borderColor = 'border-red-500 bg-red-50';
+        let statusBadge = 'bg-red-500 text-white';
+        let statusLabel = 'Pendiente';
+
+        if (isFood && isDrink) {
+          seatStatus = 'served';
+          borderColor = 'border-gray-500 bg-gray-100';
+          statusBadge = 'bg-gray-600 text-white';
+          statusLabel = 'Servido';
+        } else if (isFood || isDrink) {
+          seatStatus = 'progress';
+          borderColor = 'border-amber-500 bg-amber-50';
+          statusBadge = 'bg-amber-500 text-gray-950 font-bold';
+          statusLabel = 'En Proceso';
+        }
+
+        // Filtro visual de consulta: Resalta o Atenúa según el filtro activo
+        let isHighlighted = true;
+        if (currentSeatVisualFilter !== 'all' && currentSeatVisualFilter !== seatStatus) {
+          isHighlighted = false;
+        }
+
+        // Elemento visual táctil de la silla
+        const chair = document.createElement('div');
+        chair.style.left = `${leftPct}%`;
+        chair.style.top = `${topPct}%`;
+        chair.style.transform = 'translate(-50%, -50%)';
+        
+        const filterClasses = isHighlighted 
+          ? 'opacity-100 scale-100 shadow-md ring-2 ring-zolimar-gold/70' 
+          : 'opacity-25 scale-90 grayscale';
+
+        chair.className = `absolute w-14 h-14 sm:w-16 sm:h-16 rounded-2xl ${borderColor} border-2 flex flex-col items-center justify-between p-1 text-center cursor-pointer transition-all duration-300 hover:scale-110 active:scale-95 z-20 select-none ${filterClasses}`;
+        chair.onclick = () => openGuestServiceModal(guest, selectedTableId, seatNum);
+
+        // Íconos táctiles de Comida y Bebida
+        const foodIconHtml = isFood 
+          ? `<span class="bg-emerald-600 text-white px-1 py-0.5 rounded text-[8px] font-extrabold flex items-center space-x-0.5 shadow-sm" title="Comida Entregada">🍽️<span>✓</span></span>` 
+          : `<span class="bg-gray-200 text-gray-400 px-1 py-0.5 rounded text-[8px] font-bold opacity-60" title="Comida Pendiente">🍽️</span>`;
+
+        const drinkIconHtml = isDrink 
+          ? `<span class="bg-blue-600 text-white px-1 py-0.5 rounded text-[8px] font-extrabold flex items-center space-x-0.5 shadow-sm" title="Bebida Entregada">🥤<span>✓</span></span>` 
+          : `<span class="bg-gray-200 text-gray-400 px-1 py-0.5 rounded text-[8px] font-bold opacity-60" title="Bebida Pendiente">🥤</span>`;
+
+        chair.innerHTML = `
+          <div class="flex items-center justify-between w-full">
+            <span class="text-[8px] font-bold bg-white text-gray-800 px-1 rounded shadow-xs">S${seatNum}</span>
+            <span class="text-[7px] font-bold truncate max-w-[40px] text-gray-700">${escapeHtml(guest.name.split(' ')[0])}</span>
+          </div>
+          <div class="flex items-center space-x-0.5 my-0.5">
+            ${foodIconHtml}
+            ${drinkIconHtml}
+          </div>
+          <div class="w-full truncate text-[7px] ${statusBadge} px-1 rounded font-semibold">
+            ${escapeHtml(guest.dietary || 'Estándar')}
+          </div>
+        `;
+        container.appendChild(chair);
+      }
+      lucide.createIcons();
     }
 
-    function setDrinkType(type) {
-      document.getElementById('drink-type-input').value = type;
-      updateTableTypes();
+    // Renderiza los controles y pastillas del Catálogo del Menú del Día (Admin vs Mesero)
+    function renderMenuCatalogControls() {
+      const isAdmin = currentUser && currentUser.role === 'ADMIN';
+
+      const catalogPanel = document.getElementById('admin-service-catalog-panel');
+      const diagramCol = document.getElementById('detail-table-diagram-container');
+
+      if (isAdmin) {
+        if (catalogPanel) catalogPanel.classList.remove('hidden');
+        if (diagramCol) diagramCol.className = "md:col-span-7 flex flex-col items-center justify-center p-3 sm:p-5 bg-gradient-to-b from-emerald-50/60 via-amber-50/50 to-orange-50/60 md:rounded-2xl md:border md:border-amber-200/80 shadow-sm relative min-h-[420px]";
+      } else {
+        // Ocultar sección de Estado General del Servicio y Catálogo para Meseros
+        if (catalogPanel) catalogPanel.classList.add('hidden');
+        if (diagramCol) diagramCol.className = "md:col-span-12 flex flex-col items-center justify-center p-3 sm:p-5 bg-gradient-to-b from-emerald-50/60 via-amber-50/50 to-orange-50/60 md:rounded-2xl md:border md:border-amber-200/80 shadow-sm relative min-h-[420px]";
+      }
+
+      // Renderizar pastillas de comida
+      const foodPills = document.getElementById('food-catalog-pills');
+      if (foodPills) {
+        foodPills.innerHTML = '';
+        const foodItems = (eventData.menuCatalog || []).filter(i => i.category === 'food');
+        if (foodItems.length === 0) {
+          foodPills.innerHTML = `<span class="text-[10px] text-gray-400 italic">No hay platos configurados</span>`;
+        } else {
+          foodItems.forEach(item => {
+            const pill = document.createElement('div');
+            pill.className = "inline-flex items-center space-x-1 text-[10px] bg-emerald-100 text-emerald-950 border border-emerald-300 px-2 py-0.5 rounded-lg font-bold shadow-xs";
+            
+            let deleteBtn = '';
+            if (isAdmin) {
+              deleteBtn = `<button onclick="deleteCatalogItem(${item.id})" title="Eliminar del catálogo" class="text-red-500 hover:text-red-700 ml-1 font-extrabold text-xs">✕</button>`;
+            }
+            pill.innerHTML = `<span>🍽️ ${escapeHtml(item.name)}</span>${deleteBtn}`;
+            foodPills.appendChild(pill);
+          });
+        }
+      }
+
+      // Renderizar pastillas de bebida
+      const drinkPills = document.getElementById('drink-catalog-pills');
+      if (drinkPills) {
+        drinkPills.innerHTML = '';
+        const drinkItems = (eventData.menuCatalog || []).filter(i => i.category === 'drink');
+        if (drinkItems.length === 0) {
+          drinkPills.innerHTML = `<span class="text-[10px] text-gray-400 italic">No hay bebidas configuradas</span>`;
+        } else {
+          drinkItems.forEach(item => {
+            const pill = document.createElement('div');
+            pill.className = "inline-flex items-center space-x-1 text-[10px] bg-blue-100 text-blue-950 border border-blue-300 px-2 py-0.5 rounded-lg font-bold shadow-xs";
+            
+            let deleteBtn = '';
+            if (isAdmin) {
+              deleteBtn = `<button onclick="deleteCatalogItem(${item.id})" title="Eliminar del catálogo" class="text-red-500 hover:text-red-700 ml-1 font-extrabold text-xs">✕</button>`;
+            }
+            pill.innerHTML = `<span>🍷 ${escapeHtml(item.name)}</span>${deleteBtn}`;
+            drinkPills.appendChild(pill);
+          });
+        }
+      }
     }
 
-    async function updateTableTypes() {
-      const foodType = document.getElementById('food-type-input').value;
-      const drinkType = document.getElementById('drink-type-input').value;
-      await fetch('/api/tables/status', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${authToken}` },
-        body: JSON.stringify({ tableId: selectedTableId, foodType, drinkType })
-      });
-      showToast(`Menú guardado: Comida '${foodType}', Bebida '${drinkType}'`);
+    // Administrador: Agregar nuevo plato o bebida al catálogo del día
+    async function addCatalogItem(category) {
+      if (!currentUser || currentUser.role !== 'ADMIN') return;
+      const inputId = category === 'drink' ? 'new-drink-catalog-input' : 'new-food-catalog-input';
+      const input = document.getElementById(inputId);
+      if (!input || !input.value.trim()) return;
+
+      const name = input.value.trim();
+      try {
+        const res = await fetch('/api/admin/menu-catalog/add', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${authToken}` },
+          body: JSON.stringify({ category, name })
+        });
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.error);
+        input.value = '';
+        showToast(data.message || 'Opción agregada al catálogo');
+        fetchEventData();
+      } catch (err) {
+        alert(err.message);
+      }
+    }
+
+    // Administrador: Eliminar opción del catálogo del día
+    async function deleteCatalogItem(id) {
+      if (!currentUser || currentUser.role !== 'ADMIN') return;
+      if (!confirm('¿Eliminar esta opción del catálogo del día?')) return;
+
+      try {
+        const res = await fetch('/api/admin/menu-catalog/delete', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${authToken}` },
+          body: JSON.stringify({ id })
+        });
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.error);
+        showToast(data.message || 'Opción eliminada del catálogo');
+        fetchEventData();
+      } catch (err) {
+        alert(err.message);
+      }
     }
 
     async function toggleGuestStatus(guest) {
@@ -1426,17 +1768,8 @@
       if (guest) toggleGuestStatus(guest);
     }
 
-    async function updateTableService(status) {
-      await fetch('/api/tables/status', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${authToken}` },
-        body: JSON.stringify({ tableId: selectedTableId, serviceStatus: status })
-      });
-      updateStatusUI(status);
-      showToast(`Estado de Mesa ${selectedTableId} cambiado a: ${status}`);
-    }
-
     async function updateTableToggles() {
+      if (!currentUser || currentUser.role !== 'ADMIN') return;
       const foodService = document.getElementById('food-toggle').checked;
       const drinkService = document.getElementById('drink-toggle').checked;
       await fetch('/api/tables/status', {
@@ -1514,9 +1847,9 @@
           <td class="text-center font-bold">T-${g.table_id}</td>
           <td class="text-center font-semibold">S-${g.seat}</td>
           <td class="text-center">
-            <button onclick="toggleGuestStatusById(${g.id})" class="px-2 py-0.5 rounded-full text-[10px] font-bold ${statusBadgeClass} hover:opacity-80 transition">
+            <span class="px-2 py-0.5 rounded-full text-[10px] font-bold ${statusBadgeClass} cursor-default select-none">
               ${statusText}
-            </button>
+            </span>
           </td>
           <td class="text-center">
             <button onclick="deleteGuest(${g.id}, '${escapeHtml(g.name)}')" title="Eliminar invitado" class="text-red-400 hover:text-red-600 p-1">

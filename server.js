@@ -70,6 +70,31 @@ db.serialize(async () => {
     }
   });
 
+  // Tabla de Catálogo del Menú del Día (Comidas y Bebidas)
+  db.run(`CREATE TABLE IF NOT EXISTS menu_catalog (id INTEGER PRIMARY KEY AUTOINCREMENT, category TEXT, name TEXT, is_active INTEGER DEFAULT 1)`);
+
+  // Poblar catálogo inicial si está vacío
+  db.get(`SELECT count(*) as count FROM menu_catalog`, (err, row) => {
+    if (!err && row && row.count === 0) {
+      const defaultMenu = [
+        { category: 'food', name: 'Menú Estándar' },
+        { category: 'food', name: 'Lomo Saltado Gourmet' },
+        { category: 'food', name: 'Vegetariano' },
+        { category: 'food', name: 'Vegano' },
+        { category: 'food', name: 'Sin Gluten' },
+        { category: 'food', name: 'Menú Infantil' },
+        { category: 'drink', name: 'Agua & Gaseosa' },
+        { category: 'drink', name: 'Vino Tinto / Blanco' },
+        { category: 'drink', name: 'Cerveza Artesanal' },
+        { category: 'drink', name: 'Coctelería Zolimar' },
+        { category: 'drink', name: 'Whisky & Bar Libre' }
+      ];
+      const stmt = db.prepare(`INSERT INTO menu_catalog (category, name, is_active) VALUES (?, ?, 1)`);
+      defaultMenu.forEach(item => stmt.run([item.category, item.name]));
+      stmt.finalize();
+    }
+  });
+
   // Poblar lista inicial de invitados reales si la tabla está vacía
   db.get(`SELECT count(*) as count FROM guests`, (err, row) => {
     if (!err && row && row.count === 0) {
@@ -180,14 +205,45 @@ app.post('/api/auth/change-password', auth, (req, res) => {
   });
 });
 
-// 4. Obtener todos los datos (Mesas e Invitados)
+// 4. Obtener todos los datos (Mesas, Invitados y Catálogo de Menú del Día)
 app.get('/api/event-data', auth, (req, res) => {
   db.all(`SELECT * FROM tables ORDER BY id ASC`, [], (err, tables) => {
     if (err) return res.status(500).json({ error: 'Error al consultar mesas' });
     db.all(`SELECT * FROM guests ORDER BY table_id ASC, id ASC`, [], (err2, guests) => {
       if (err2) return res.status(500).json({ error: 'Error al consultar invitados' });
-      res.json({ tables, guests });
+      db.all(`SELECT * FROM menu_catalog WHERE is_active = 1 ORDER BY id ASC`, [], (err3, menuCatalog) => {
+        if (err3) menuCatalog = [];
+        res.json({ tables, guests, menuCatalog: menuCatalog || [] });
+      });
     });
+  });
+});
+
+// 4.1 Administrador: Agregar opción al catálogo del menú del día
+app.post('/api/admin/menu-catalog/add', auth, (req, res) => {
+  if (req.user.role !== 'ADMIN') return res.status(403).json({ error: 'Solo los administradores pueden gestionar el catálogo del día.' });
+  const { category, name } = req.body;
+  if (!name || !name.trim()) return res.status(400).json({ error: 'El nombre de la opción es requerido.' });
+  const cleanCategory = category === 'drink' ? 'drink' : 'food';
+  const cleanName = name.trim();
+
+  db.run(`INSERT INTO menu_catalog (category, name, is_active) VALUES (?, ?, 1)`, [cleanCategory, cleanName], function(err) {
+    if (err) return res.status(500).json({ error: 'Error al guardar en catálogo: ' + err.message });
+    io.emit('refresh-data');
+    res.json({ success: true, message: `Opción '${cleanName}' agregada al catálogo del día.`, id: this.lastID });
+  });
+});
+
+// 4.2 Administrador: Eliminar opción del catálogo del menú del día
+app.post('/api/admin/menu-catalog/delete', auth, (req, res) => {
+  if (req.user.role !== 'ADMIN') return res.status(403).json({ error: 'Solo los administradores pueden eliminar opciones del catálogo.' });
+  const { id } = req.body;
+  if (!id) return res.status(400).json({ error: 'ID de opción requerido.' });
+
+  db.run(`DELETE FROM menu_catalog WHERE id = ?`, [id], function(err) {
+    if (err) return res.status(500).json({ error: 'Error al eliminar del catálogo.' });
+    io.emit('refresh-data');
+    res.json({ success: true, message: 'Opción eliminada del catálogo del día.' });
   });
 });
 
@@ -366,15 +422,27 @@ app.post('/api/guests/status', auth, (req, res) => {
   db.get(`SELECT * FROM guests WHERE id = ?`, [guestId], (err, currentGuest) => {
     if (err || !currentGuest) return res.status(404).json({ error: 'Invitado no encontrado' });
 
+    // SEGURIDAD: Bloquear modificación si el servicio ya fue confirmado y el usuario es MESERO
+    if (currentGuest.food_served === 1 && currentGuest.drink_served === 1 && req.user.role !== 'ADMIN') {
+      return res.status(403).json({ error: 'El servicio ya fue confirmado. Solo un administrador puede modificarlo.' });
+    }
+
     const newFoodServed = food_served !== undefined ? (food_served ? 1 : 0) : currentGuest.food_served;
     const newDrinkServed = drink_served !== undefined ? (drink_served ? 1 : 0) : currentGuest.drink_served;
     const newDietary = dietary !== undefined ? dietary : currentGuest.dietary;
     const newTag = tag !== undefined ? tag : currentGuest.tag;
 
-    // Si tiene su comida y su agua servidas, el estado pasa automáticamente a 'Served' (Plomo)
-    let newStatus = status !== undefined ? status : currentGuest.status;
-    if (newFoodServed === 1 && newDrinkServed === 1) {
+    // Si se especifica un estado explícito ('Pending', 'In Progress', 'Served'), se utiliza ese.
+    // De lo contrario, se calcula automáticamente según las entregas.
+    let newStatus;
+    if (status && ['Pending', 'In Progress', 'Served'].includes(status)) {
+      newStatus = status;
+    } else if (newFoodServed === 1 && newDrinkServed === 1) {
       newStatus = 'Served';
+    } else if (newFoodServed === 1 || newDrinkServed === 1) {
+      newStatus = 'In Progress';
+    } else {
+      newStatus = 'Pending';
     }
 
     db.run(
@@ -382,50 +450,68 @@ app.post('/api/guests/status', auth, (req, res) => {
       [newStatus, newFoodServed, newDrinkServed, newDietary, newTag, guestId],
       function(updateErr) {
         if (updateErr) return res.status(500).json({ error: 'Error actualizando estado del invitado' });
-        io.emit('refresh-data');
-        res.json({ success: true, guest: { id: guestId, status: newStatus, food_served: newFoodServed, drink_served: newDrinkServed } });
+
+        // Recalcular el estado general de la mesa automáticamente desde sus invitados
+        db.all(`SELECT status, food_served, drink_served FROM guests WHERE table_id = ?`, [currentGuest.table_id], (err2, tableGuests) => {
+          if (!err2 && tableGuests && tableGuests.length > 0) {
+            const allServed = tableGuests.every(g => g.status === 'Served' || (g.food_served === 1 && g.drink_served === 1));
+            const anyServed = tableGuests.some(g => g.status === 'Served' || g.status === 'In Progress' || g.food_served === 1 || g.drink_served === 1);
+            const tableStatus = allServed ? 'Served' : anyServed ? 'In Progress' : 'Pending';
+            db.run(`UPDATE tables SET service_status = ? WHERE id = ?`, [tableStatus, currentGuest.table_id], () => {
+              io.emit('refresh-data');
+              res.json({ success: true, guest: { id: guestId, status: newStatus, food_served: newFoodServed, drink_served: newDrinkServed } });
+            });
+          } else {
+            io.emit('refresh-data');
+            res.json({ success: true, guest: { id: guestId, status: newStatus, food_served: newFoodServed, drink_served: newDrinkServed } });
+          }
+        });
       }
     );
   });
 });
 
-// 10. Cambiar Estado y Detalles del Servicio de Mesa (Comida y Bebida)
+// 10. Cambiar Detalles del Servicio de Mesa (Comida y Bebida) — service_status calculado automáticamente
 app.post('/api/tables/status', auth, (req, res) => {
-  const { tableId, serviceStatus, foodService, drinkService, foodType, drinkType } = req.body;
+  const { tableId, foodService, drinkService, foodType, drinkType } = req.body;
   if (!tableId) return res.status(400).json({ error: 'Parámetro tableId requerido' });
+
+  // SEGURIDAD: Solo ADMIN puede definir el tipo de menú y bebida
+  if ((foodType !== undefined || drinkType !== undefined) && req.user.role !== 'ADMIN') {
+    return res.status(403).json({ error: 'Solo el Administrador puede definir el tipo de menú y bebida.' });
+  }
 
   db.get(`SELECT * FROM tables WHERE id = ?`, [tableId], (err, currentTable) => {
     if (err || !currentTable) return res.status(404).json({ error: 'Mesa no encontrada' });
 
-    const newServiceStatus = serviceStatus !== undefined ? serviceStatus : currentTable.service_status;
     const newFoodService = foodService !== undefined ? (foodService ? 1 : 0) : currentTable.food_service;
     const newDrinkService = drinkService !== undefined ? (drinkService ? 1 : 0) : currentTable.drink_service;
     const newFoodType = foodType !== undefined ? foodType : (currentTable.food_type || 'Menú Estándar');
     const newDrinkType = drinkType !== undefined ? drinkType : (currentTable.drink_type || 'Agua & Gaseosa');
 
-    db.run(
-      `UPDATE tables SET service_status = ?, food_service = ?, drink_service = ?, food_type = ?, drink_type = ? WHERE id = ?`,
-      [newServiceStatus, newFoodService, newDrinkService, newFoodType, newDrinkType, tableId],
-      (updateErr) => {
-        if (updateErr) return res.status(500).json({ error: 'Error actualizando mesa: ' + updateErr.message });
-        
-        // Si el estado de la mesa cambia a Served o In Progress, actualizar opcionalmente a todos los invitados de la mesa
-        if (serviceStatus === 'Served') {
-          db.run(`UPDATE guests SET status = 'Served', food_served = 1, drink_served = 1 WHERE table_id = ?`, [tableId], () => {
-            io.emit('refresh-data');
-            res.json({ success: true });
-          });
-        } else if (serviceStatus === 'Pending') {
-          db.run(`UPDATE guests SET status = 'Pending', food_served = 0, drink_served = 0 WHERE table_id = ?`, [tableId], () => {
-            io.emit('refresh-data');
-            res.json({ success: true });
-          });
+    // Calcular service_status AUTOMÁTICAMENTE desde el estado real de los invitados de la mesa
+    db.all(`SELECT food_served, drink_served FROM guests WHERE table_id = ?`, [tableId], (err2, tableGuests) => {
+      let newServiceStatus = currentTable.service_status;
+      if (!err2 && tableGuests) {
+        if (tableGuests.length === 0) {
+          newServiceStatus = 'Pending';
         } else {
-          io.emit('refresh-data');
-          res.json({ success: true });
+          const allServed = tableGuests.every(g => g.food_served === 1 && g.drink_served === 1);
+          const anyServed = tableGuests.some(g => g.food_served === 1 || g.drink_served === 1);
+          newServiceStatus = allServed ? 'Served' : anyServed ? 'In Progress' : 'Pending';
         }
       }
-    );
+
+      db.run(
+        `UPDATE tables SET service_status = ?, food_service = ?, drink_service = ?, food_type = ?, drink_type = ? WHERE id = ?`,
+        [newServiceStatus, newFoodService, newDrinkService, newFoodType, newDrinkType, tableId],
+        (updateErr) => {
+          if (updateErr) return res.status(500).json({ error: 'Error actualizando mesa: ' + updateErr.message });
+          io.emit('refresh-data');
+          res.json({ success: true, service_status: newServiceStatus });
+        }
+      );
+    });
   });
 });
 
