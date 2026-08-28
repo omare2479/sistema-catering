@@ -422,16 +422,143 @@
             <span>Guardar Invitado</span>
           </button>
         </form>
+    </div>
+
+    <!-- MODAL DE PERSONALIZACIÓN DE NOMBRE E IMAGEN DEL EVENTO -->
+    <div id="event-banner-modal" class="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
+      <div class="bg-white rounded-2xl p-5 w-full max-w-sm shadow-2xl border-2 border-zolimar-gold relative space-y-4">
+        <button onclick="closeEventBannerModal()" class="absolute top-3 right-3 text-gray-400 hover:text-gray-600">
+          <i data-lucide="x" class="w-5 h-5"></i>
+        </button>
+
+        <div class="text-center">
+          <h3 class="text-zolimar-dark font-extrabold text-base flex items-center justify-center space-x-1.5">
+            <i data-lucide="sparkles" class="w-5 h-5 text-zolimar-gold"></i>
+            <span>Personalizar Evento Actual</span>
+          </h3>
+          <p class="text-[11px] text-gray-500 mt-0.5">Nombre y foto representativa del centro de la app</p>
+        </div>
+
+        <!-- Vista Previa de Imagen centrada -->
+        <div class="flex flex-col items-center justify-center space-y-1">
+          <img id="modal-event-banner-preview" src="/bg-event-1.jpg" class="w-20 h-20 sm:w-24 sm:h-24 rounded-full object-cover border-4 border-zolimar-gold shadow-lg">
+          <span class="text-[10px] text-gray-400 font-semibold">Vista Previa del Banner</span>
+        </div>
+
+        <form onsubmit="handleEventBannerSubmit(event)" class="space-y-3">
+          <div>
+            <label class="text-[10px] font-bold text-gray-700 uppercase block mb-1">Nombre del Evento</label>
+            <input id="event-name-input" type="text" placeholder="Ej. Boda Ana & Carlos - Noche de Gala" required class="w-full text-xs p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-zolimar-gold outline-none font-semibold">
+          </div>
+
+          <div id="admin-event-upload-box">
+            <label class="text-[10px] font-bold text-gray-700 uppercase block mb-1">Cargar Foto / Banner del Evento (Dropzone)</label>
+            <div onclick="document.getElementById('event-file-input').click()" class="border-2 border-dashed border-zolimar-gold/80 rounded-xl p-3.5 text-center cursor-pointer hover:bg-amber-50/50 transition">
+              <i data-lucide="upload-cloud" class="w-7 h-7 text-zolimar-gold mx-auto mb-1"></i>
+              <p class="text-xs font-bold text-gray-800">Haz clic o selecciona tu foto aquí</p>
+              <p class="text-[9px] text-gray-400">Archivos soportados: JPG, PNG, WebP</p>
+              <input id="event-file-input" type="file" accept="image/*" onchange="previewEventBanner(event)" class="hidden">
+            </div>
+          </div>
+
+          <div id="event-modal-error" class="text-[11px] text-red-600 font-semibold hidden text-center"></div>
+
+          <button id="event-save-btn" type="submit" class="w-full bg-zolimar-dark text-zolimar-gold font-bold py-2.5 rounded-xl text-xs hover:bg-zolimar-green transition shadow-md flex items-center justify-center space-x-1">
+            <i data-lucide="save" class="w-4 h-4"></i>
+            <span>Guardar Configuración del Evento</span>
+          </button>
+        </form>
+      </div>
+    </div>
+
+    <!-- MODAL DE CORRECCIÓN DE PEDIDO / SERVICIO PARA EL MESERO -->
+    <div id="order-edit-modal" class="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
+      <div class="bg-white rounded-2xl p-5 w-full max-w-sm shadow-2xl border-2 border-emerald-600 relative space-y-4">
+        <button onclick="closeOrderEditModal()" class="absolute top-3 right-3 text-gray-400 hover:text-gray-600">
+          <i data-lucide="x" class="w-5 h-5"></i>
+        </button>
+
+        <div class="border-b pb-2">
+          <div class="flex items-center space-x-2">
+            <span id="oem-seat-badge" class="text-[10px] bg-emerald-100 text-emerald-900 font-bold px-2 py-0.5 rounded-full">Mesa 1 - Silla 1</span>
+            <span id="oem-status-badge" class="text-[10px] bg-red-500 text-white font-bold px-2 py-0.5 rounded-full">Pendiente</span>
+          </div>
+          <h3 id="oem-guest-name" class="text-gray-900 font-extrabold text-base leading-tight mt-1">Ana Gómez</h3>
+          <p class="text-[10px] text-emerald-800 font-semibold flex items-center space-x-1 mt-0.5">
+            <i data-lucide="edit-3" class="w-3.5 h-3.5"></i>
+            <span>Módulo de Corrección de Pedido en Tiempo Real</span>
+          </p>
+        </div>
+
+        <form onsubmit="handleOrderEditSubmit(event)" class="space-y-3">
+          <div>
+            <label class="text-[10px] font-bold text-gray-700 uppercase mb-1 block">Plato / Menú Asignado</label>
+            <select id="oem-dietary-select" class="w-full text-xs p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 outline-none bg-white font-semibold text-gray-800">
+            </select>
+          </div>
+
+          <div>
+            <label class="text-[10px] font-bold text-gray-700 uppercase mb-1 block">Notas / Especificaciones Especiales</label>
+            <input id="oem-notes-input" type="text" placeholder="Ej. Sin cebolla, alérgica a mariscos, servido bien caliente..." class="w-full text-xs p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 outline-none bg-white">
+          </div>
+
+          <div class="space-y-2 bg-gray-50 p-2.5 rounded-xl border border-gray-200">
+            <div class="flex items-center justify-between">
+              <div class="flex items-center space-x-2">
+                <i data-lucide="utensils" class="w-4 h-4 text-emerald-700"></i>
+                <span class="text-xs font-bold text-gray-800">Comida Entregada 🍲</span>
+              </div>
+              <input id="oem-food-check" type="checkbox" class="w-5 h-5 accent-emerald-600 cursor-pointer">
+            </div>
+
+            <div class="flex items-center justify-between border-t pt-2">
+              <div class="flex items-center space-x-2">
+                <i data-lucide="droplet" class="w-4 h-4 text-blue-600"></i>
+                <span class="text-xs font-bold text-gray-800">Agua / Bebida Entregada 🥤</span>
+              </div>
+              <input id="oem-drink-check" type="checkbox" class="w-5 h-5 accent-blue-600 cursor-pointer">
+            </div>
+          </div>
+
+          <!-- PIN DE AUTORIZACIÓN (REQUERIDO SI YA FUE ENTREGADO Y ES MESERO) -->
+          <div id="oem-pin-container" class="hidden bg-amber-50 p-2.5 rounded-xl border border-amber-300">
+            <label class="text-[10px] font-bold text-amber-900 uppercase block mb-1">🔑 Clave / PIN de Autorización (Default: 1234):</label>
+            <input id="oem-pin-input" type="password" placeholder="Ingrese PIN (ej. 1234)" class="w-full text-xs p-1.5 border border-amber-400 rounded-lg outline-none bg-white text-center font-bold">
+          </div>
+
+          <div id="oem-error" class="text-[11px] text-red-600 font-semibold hidden text-center"></div>
+
+          <button id="oem-save-btn" type="submit" class="w-full bg-emerald-700 text-white font-bold py-2.5 rounded-xl text-xs hover:bg-emerald-800 transition shadow-md flex items-center justify-center space-x-1 active:scale-95">
+            <i data-lucide="check-circle" class="w-4 h-4"></i>
+            <span>Guardar Modificación de Pedido</span>
+          </button>
+        </form>
       </div>
     </div>
 
     <!-- HEADER SUPERIOR PRINCIPAL -->
-    <header class="bg-zolimar-dark text-white px-4 pt-3 pb-2 border-b border-zolimar-gold/30">
-      <div class="flex justify-between items-center mb-1">
+    <header class="bg-zolimar-dark text-white px-4 pt-3 pb-2 border-b border-zolimar-gold/30 shadow-md relative">
+      <div class="flex justify-between items-center mb-1.5">
+        <!-- MARCA ZOLIMAR -->
         <div class="flex items-center space-x-2">
           <span class="text-zolimar-gold font-serif italic text-xl font-bold">Zolimar</span>
-          <span class="text-[10px] text-zolimar-goldLight tracking-widest uppercase">Catering</span>
+          <span class="text-[10px] text-zolimar-goldLight tracking-widest uppercase hidden sm:inline">Catering</span>
         </div>
+
+        <!-- COMPONENTE DINÁMICO DEL CENTRO: NOMBRE E IMAGEN DEL EVENTO -->
+        <div class="flex flex-col items-center justify-center cursor-pointer group px-2" onclick="openEventBannerModal()" title="Personalizar Nombre e Imagen del Evento">
+          <div class="relative">
+            <img id="header-event-banner" src="/bg-event-1.jpg" alt="Logo / Banner Evento" class="w-10 h-10 sm:w-14 sm:h-14 rounded-full object-cover border-2 border-zolimar-gold shadow-md group-hover:scale-105 transition">
+            <span id="header-banner-edit-icon" class="absolute bottom-0 right-0 bg-zolimar-gold text-zolimar-dark p-0.5 rounded-full text-[8px] font-bold shadow hidden">
+              <i data-lucide="camera" class="w-3 h-3"></i>
+            </span>
+          </div>
+          <h1 id="header-event-name" class="font-extrabold text-[11px] sm:text-xs text-zolimar-gold tracking-wide uppercase mt-0.5 text-center max-w-[160px] sm:max-w-[280px] truncate group-hover:text-white transition">
+            Zolimar Catering & Eventos
+          </h1>
+        </div>
+
+        <!-- USUARIOS Y SESIÓN -->
         <div class="flex items-center space-x-2">
           <span id="user-name" class="text-[10px] text-gray-300 hidden font-medium"></span>
           <span id="user-badge" class="text-[10px] bg-zolimar-gold/20 text-zolimar-gold px-2 py-0.5 rounded-full font-bold">Admin</span>
@@ -1410,6 +1537,231 @@
       } catch (err) {
         errDiv.innerText = err.message;
         errDiv.classList.remove('hidden');
+    /* COMPONENTE DINÁMICO DEL CENTRO: NOMBRE E IMAGEN DEL EVENTO */
+    function openEventBannerModal() {
+      const modal = document.getElementById('event-banner-modal');
+      const nameInput = document.getElementById('event-name-input');
+      const previewImg = document.getElementById('modal-event-banner-preview');
+      const uploadBox = document.getElementById('admin-event-upload-box');
+      const errDiv = document.getElementById('event-modal-error');
+
+      if (errDiv) errDiv.classList.add('hidden');
+
+      const currentName = document.getElementById('header-event-name')?.innerText || 'Zolimar Catering & Eventos';
+      const currentBanner = document.getElementById('header-event-banner')?.src || '/bg-event-1.jpg';
+
+      if (nameInput) nameInput.value = currentName;
+      if (previewImg) previewImg.src = currentBanner;
+
+      // Solo mostrar controles de subida si el usuario es ADMIN
+      const isAdmin = currentUser && currentUser.role === 'ADMIN';
+      if (uploadBox) {
+        if (isAdmin) uploadBox.classList.remove('hidden');
+        else uploadBox.classList.add('hidden');
+      }
+
+      if (modal) {
+        modal.classList.remove('hidden');
+        lucide.createIcons();
+      }
+    }
+
+    function closeEventBannerModal() {
+      const modal = document.getElementById('event-banner-modal');
+      if (modal) modal.classList.add('hidden');
+    }
+
+    function previewEventBanner(event) {
+      const file = event.target.files[0];
+      if (file) {
+        const reader = new FileReader();
+        reader.onload = (e) => {
+          const previewImg = document.getElementById('modal-event-banner-preview');
+          if (previewImg) previewImg.src = e.target.result;
+        };
+        reader.readAsDataURL(file);
+      }
+    }
+
+    async function handleEventBannerSubmit(e) {
+      e.preventDefault();
+      const isAdmin = currentUser && currentUser.role === 'ADMIN';
+      if (!isAdmin) {
+        alert('Solo un administrador puede modificar la configuración del evento.');
+        return;
+      }
+
+      const nameInput = document.getElementById('event-name-input');
+      const fileInput = document.getElementById('event-file-input');
+      const errDiv = document.getElementById('event-modal-error');
+      if (errDiv) errDiv.classList.add('hidden');
+
+      const newName = nameInput ? nameInput.value.trim() : '';
+
+      try {
+        if (newName) {
+          const res1 = await fetch('/api/admin/event-info/update', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${authToken}` },
+            body: JSON.stringify({ event_name: newName })
+          });
+          const d1 = await res1.json();
+          if (!res1.ok) throw new Error(d1.error);
+        }
+
+        if (fileInput && fileInput.files[0]) {
+          const formData = new FormData();
+          formData.append('banner', fileInput.files[0]);
+
+          const res2 = await fetch('/api/admin/event-info/banner-upload', {
+            method: 'POST',
+            headers: { 'Authorization': `Bearer ${authToken}` },
+            body: formData
+          });
+          const d2 = await res2.json();
+          if (!res2.ok) throw new Error(d2.error);
+        }
+
+        closeEventBannerModal();
+        showToast('Configuración del evento actualizada');
+        fetchEventData();
+      } catch (err) {
+        if (errDiv) {
+          errDiv.innerText = err.message;
+          errDiv.classList.remove('hidden');
+        } else {
+          alert(err.message);
+        }
+      }
+    }
+
+    /* MÓDULO DE CORRECCIÓN PARA EL MESERO (EDICIÓN EN TIEMPO REAL DE PEDIDO) */
+    let selectedOrderEditGuest = null;
+
+    function openOrderEditModal(guest) {
+      if (!guest || !guest.id) return;
+      selectedOrderEditGuest = guest;
+
+      const modal = document.getElementById('order-edit-modal');
+      const nameElem = document.getElementById('oem-guest-name');
+      const seatBadge = document.getElementById('oem-seat-badge');
+      const statusBadge = document.getElementById('oem-status-badge');
+      const dietarySelect = document.getElementById('oem-dietary-select');
+      const notesInput = document.getElementById('oem-notes-input');
+      const foodCheck = document.getElementById('oem-food-check');
+      const drinkCheck = document.getElementById('oem-drink-check');
+      const pinContainer = document.getElementById('oem-pin-container');
+      const pinInput = document.getElementById('oem-pin-input');
+      const errDiv = document.getElementById('oem-error');
+
+      if (errDiv) errDiv.classList.add('hidden');
+      if (pinInput) pinInput.value = '';
+
+      if (nameElem) nameElem.innerText = guest.name || 'Invitado';
+      if (seatBadge) seatBadge.innerText = `Mesa ${guest.table_id} - Silla ${guest.seat}`;
+      
+      const isServed = guest.status === 'Served' || (guest.food_served === 1 && guest.drink_served === 1);
+      const isProgress = guest.status === 'In Progress' || guest.food_served === 1 || guest.drink_served === 1;
+
+      if (statusBadge) {
+        if (isServed) {
+          statusBadge.className = 'text-[10px] bg-gray-600 text-white font-bold px-2 py-0.5 rounded-full';
+          statusBadge.innerText = '🔘 Servido (Plomo)';
+        } else if (isProgress) {
+          statusBadge.className = 'text-[10px] bg-amber-500 text-amber-950 font-bold px-2 py-0.5 rounded-full';
+          statusBadge.innerText = '🟡 En Proceso';
+        } else {
+          statusBadge.className = 'text-[10px] bg-red-600 text-white font-bold px-2 py-0.5 rounded-full';
+          statusBadge.innerText = '🔴 Pendiente';
+        }
+      }
+
+      // Poblar opciones de Menú/Plato
+      if (dietarySelect) {
+        dietarySelect.innerHTML = '';
+        const foodOptions = (eventData.menuCatalog || []).filter(item => item.category === 'food');
+        const defaultOptions = foodOptions.length > 0 ? foodOptions.map(f => f.name) : ['Menú Estándar', 'Lomo Saltado Gourmet', 'Vegetariano', 'Vegano', 'Sin Gluten', 'Menú Infantil'];
+        
+        const currentDiet = guest.dietary || 'Menú Estándar';
+        if (!defaultOptions.includes(currentDiet)) defaultOptions.unshift(currentDiet);
+
+        defaultOptions.forEach(opt => {
+          const optElem = document.createElement('option');
+          optElem.value = opt;
+          optElem.innerText = opt;
+          if (opt === currentDiet) optElem.selected = true;
+          dietarySelect.appendChild(optElem);
+        });
+      }
+
+      if (notesInput) notesInput.value = guest.notes || '';
+      if (foodCheck) foodCheck.checked = !!guest.food_served;
+      if (drinkCheck) drinkCheck.checked = !!guest.drink_served;
+
+      // Mostrar contenedor de PIN si el pedido ya fue entregado y el usuario es MESERO
+      const isWaiter = currentUser && currentUser.role !== 'ADMIN';
+      if (isServed && isWaiter) {
+        if (pinContainer) pinContainer.classList.remove('hidden');
+      } else {
+        if (pinContainer) pinContainer.classList.add('hidden');
+      }
+
+      if (modal) {
+        modal.classList.remove('hidden');
+        lucide.createIcons();
+      }
+    }
+
+    function closeOrderEditModal() {
+      const modal = document.getElementById('order-edit-modal');
+      if (modal) modal.classList.add('hidden');
+    }
+
+    async function handleOrderEditSubmit(e) {
+      e.preventDefault();
+      if (!selectedOrderEditGuest || !selectedOrderEditGuest.id) return;
+
+      const dietarySelect = document.getElementById('oem-dietary-select');
+      const notesInput = document.getElementById('oem-notes-input');
+      const foodCheck = document.getElementById('oem-food-check');
+      const drinkCheck = document.getElementById('oem-drink-check');
+      const pinInput = document.getElementById('oem-pin-input');
+      const errDiv = document.getElementById('oem-error');
+      if (errDiv) errDiv.classList.add('hidden');
+
+      const dietary = dietarySelect ? dietarySelect.value : 'Menú Estándar';
+      const notes = notesInput ? notesInput.value.trim() : '';
+      const food_served = foodCheck && foodCheck.checked ? 1 : 0;
+      const drink_served = drinkCheck && drinkCheck.checked ? 1 : 0;
+      const pin = pinInput ? pinInput.value.trim() : '';
+
+      try {
+        const res = await fetch('/api/waiter/order/update', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${authToken}` },
+          body: JSON.stringify({ 
+            guestId: selectedOrderEditGuest.id, 
+            dietary, 
+            notes, 
+            food_served, 
+            drink_served,
+            pin
+          })
+        });
+
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.error || 'Error actualizando pedido');
+
+        closeOrderEditModal();
+        showToast('¡Pedido actualizado en tiempo real!');
+        fetchEventData();
+      } catch (err) {
+        if (errDiv) {
+          errDiv.innerText = err.message;
+          errDiv.classList.remove('hidden');
+        } else {
+          alert(err.message);
+        }
       }
     }
 
@@ -1424,6 +1776,16 @@
           return;
         }
         eventData = await res.json();
+        if (eventData.eventInfo) {
+          const nameElem = document.getElementById('header-event-name');
+          const bannerElem = document.getElementById('header-event-banner');
+          if (nameElem && eventData.eventInfo.event_name) {
+            nameElem.innerText = eventData.eventInfo.event_name;
+          }
+          if (bannerElem && eventData.eventInfo.banner_url) {
+            bannerElem.src = eventData.eventInfo.banner_url;
+          }
+        }
         renderDashboard();
         renderGuestsTable();
         if (!document.getElementById('view-table-detail').classList.contains('hidden')) {
@@ -1858,10 +2220,13 @@
         if (g.food_served) badgesHtml += '<span class="ml-1" title="Comida Servida">🍲</span>';
         if (g.drink_served) badgesHtml += '<span class="ml-1" title="Bebida Servida">🥤</span>';
 
+        let notesHtml = g.notes ? `<div class="text-[9px] text-amber-800 font-bold bg-amber-50 px-1.5 py-0.5 rounded inline-block mt-0.5 border border-amber-200">📝 ${escapeHtml(g.notes)}</div>` : '';
+
         tr.innerHTML = `
           <td class="py-2 px-3 font-semibold" onclick="openGuestServiceModal(${JSON.stringify(g).replace(/"/g, '&quot;')}, ${g.table_id}, '${g.seat}')">
             ${escapeHtml(g.name)} ${badgesHtml}
             <div class="text-[9px] text-gray-400">${escapeHtml(g.dietary || 'Standard')}</div>
+            ${notesHtml}
           </td>
           <td class="text-center font-bold">T-${g.table_id}</td>
           <td class="text-center font-semibold">S-${g.seat}</td>
@@ -1871,9 +2236,15 @@
             </span>
           </td>
           <td class="text-center">
-            <button onclick="deleteGuest(${g.id}, '${escapeHtml(g.name)}')" title="Eliminar invitado" class="text-red-400 hover:text-red-600 p-1">
-              <i data-lucide="trash-2" class="w-3.5 h-3.5"></i>
-            </button>
+            <div class="flex items-center justify-center space-x-1">
+              <button onclick="event.stopPropagation(); openOrderEditModal(${JSON.stringify(g).replace(/"/g, '&quot;')})" title="Editar Servicio / Pedido" class="bg-emerald-50 text-emerald-800 hover:bg-emerald-100 border border-emerald-300 px-1.5 py-0.5 rounded text-[10px] font-bold flex items-center space-x-0.5">
+                <i data-lucide="edit-3" class="w-3 h-3 text-emerald-700"></i>
+                <span>Editar</span>
+              </button>
+              <button onclick="event.stopPropagation(); deleteGuest(${g.id}, '${escapeHtml(g.name)}')" title="Eliminar invitado" class="text-red-400 hover:text-red-600 p-1">
+                <i data-lucide="trash-2" class="w-3.5 h-3.5"></i>
+              </button>
+            </div>
           </td>
         `;
         tbody.appendChild(tr);

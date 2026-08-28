@@ -15,6 +15,21 @@ const server = http.createServer(app);
 const io = new Server(server, { cors: { origin: '*' } });
 const upload = multer({ storage: multer.memoryStorage() });
 
+// Configuración de almacenamiento en disco para imágenes del evento
+const uploadsDir = path.join(__dirname, 'public', 'uploads');
+if (!fs.existsSync(uploadsDir)) {
+  fs.mkdirSync(uploadsDir, { recursive: true });
+}
+
+const bannerStorage = multer.diskStorage({
+  destination: (req, file, cb) => cb(null, uploadsDir),
+  filename: (req, file, cb) => {
+    const ext = path.extname(file.originalname) || '.jpg';
+    cb(null, `event_banner_${Date.now()}${ext}`);
+  }
+});
+const uploadBanner = multer({ storage: bannerStorage });
+
 const JWT_SECRET = "ZOLIMAR_SECRET_2026";
 const dbPath = path.join(__dirname, 'public', 'zolimar.db');
 const db = new sqlite3.Database(dbPath);
@@ -34,14 +49,23 @@ app.get('/', (req, res) => {
 db.serialize(async () => {
   db.run(`CREATE TABLE IF NOT EXISTS users (id INTEGER PRIMARY KEY AUTOINCREMENT, name TEXT, email TEXT UNIQUE, password_hash TEXT, role TEXT)`);
   db.run(`CREATE TABLE IF NOT EXISTS tables (id INTEGER PRIMARY KEY, service_status TEXT, food_service INTEGER, drink_service INTEGER, food_type TEXT, drink_type TEXT)`);
-  db.run(`CREATE TABLE IF NOT EXISTS guests (id INTEGER PRIMARY KEY AUTOINCREMENT, name TEXT, table_id INTEGER, seat TEXT, dietary TEXT, tag TEXT, status TEXT, food_served INTEGER DEFAULT 0, drink_served INTEGER DEFAULT 0)`);
+  db.run(`CREATE TABLE IF NOT EXISTS guests (id INTEGER PRIMARY KEY AUTOINCREMENT, name TEXT, table_id INTEGER, seat TEXT, dietary TEXT, tag TEXT, status TEXT, food_served INTEGER DEFAULT 0, drink_served INTEGER DEFAULT 0, notes TEXT)`);
   db.run(`CREATE TABLE IF NOT EXISTS audit_logs (id INTEGER PRIMARY KEY AUTOINCREMENT, user_name TEXT, action TEXT, details TEXT, timestamp DATETIME DEFAULT CURRENT_TIMESTAMP)`);
+  db.run(`CREATE TABLE IF NOT EXISTS event_info (id INTEGER PRIMARY KEY, event_name TEXT, banner_url TEXT)`);
 
-  // Migraciones seguras para agregar columnas food_type, drink_type, food_served, drink_served
+  // Migraciones seguras para agregar columnas food_type, drink_type, food_served, drink_served, notes
   db.run(`ALTER TABLE tables ADD COLUMN food_type TEXT`, () => {});
   db.run(`ALTER TABLE tables ADD COLUMN drink_type TEXT`, () => {});
   db.run(`ALTER TABLE guests ADD COLUMN food_served INTEGER DEFAULT 0`, () => {});
   db.run(`ALTER TABLE guests ADD COLUMN drink_served INTEGER DEFAULT 0`, () => {});
+  db.run(`ALTER TABLE guests ADD COLUMN notes TEXT`, () => {});
+
+  // Asegurar registro inicial en event_info
+  db.get(`SELECT count(*) as count FROM event_info`, (err, row) => {
+    if (!err && row && row.count === 0) {
+      db.run(`INSERT INTO event_info (id, event_name, banner_url) VALUES (1, 'Zolimar Catering & Eventos', '/bg-event-1.jpg')`);
+    }
+  });
 
   // Crear 20 mesas si no existen
   for (let i = 1; i <= 20; i++) {
@@ -205,7 +229,7 @@ app.post('/api/auth/change-password', auth, (req, res) => {
   });
 });
 
-// 4. Obtener todos los datos (Mesas, Invitados y Catálogo de Menú del Día)
+// 4. Obtener todos los datos (Mesas, Invitados, Catálogo y Configuración del Evento)
 app.get('/api/event-data', auth, (req, res) => {
   db.all(`SELECT * FROM tables ORDER BY id ASC`, [], (err, tables) => {
     if (err) return res.status(500).json({ error: 'Error al consultar mesas' });
@@ -213,9 +237,43 @@ app.get('/api/event-data', auth, (req, res) => {
       if (err2) return res.status(500).json({ error: 'Error al consultar invitados' });
       db.all(`SELECT * FROM menu_catalog WHERE is_active = 1 ORDER BY id ASC`, [], (err3, menuCatalog) => {
         if (err3) menuCatalog = [];
-        res.json({ tables, guests, menuCatalog: menuCatalog || [] });
+        db.get(`SELECT * FROM event_info WHERE id = 1`, [], (err4, eventInfo) => {
+          const defaultEvent = { event_name: 'Zolimar Catering & Eventos', banner_url: '/bg-event-1.jpg' };
+          res.json({ 
+            tables, 
+            guests, 
+            menuCatalog: menuCatalog || [], 
+            eventInfo: eventInfo || defaultEvent 
+          });
+        });
       });
     });
+  });
+});
+
+// 4.01 Administrador: Actualizar Nombre del Evento
+app.post('/api/admin/event-info/update', auth, (req, res) => {
+  if (req.user.role !== 'ADMIN') return res.status(403).json({ error: 'Solo los administradores pueden cambiar el nombre del evento.' });
+  const { event_name } = req.body;
+  if (!event_name || !event_name.trim()) return res.status(400).json({ error: 'El nombre del evento no puede estar vacío.' });
+
+  db.run(`UPDATE event_info SET event_name = ? WHERE id = 1`, [event_name.trim()], (err) => {
+    if (err) return res.status(500).json({ error: 'Error al actualizar el nombre del evento.' });
+    io.emit('refresh-data');
+    res.json({ success: true, message: 'Nombre del evento actualizado con éxito.' });
+  });
+});
+
+// 4.02 Administrador: Cargar Imagen Personalizada del Evento (Dropzone/Avatar/Banner)
+app.post('/api/admin/event-info/banner-upload', auth, uploadBanner.single('banner'), (req, res) => {
+  if (req.user.role !== 'ADMIN') return res.status(403).json({ error: 'Solo los administradores pueden cambiar la foto del evento.' });
+  if (!req.file) return res.status(400).json({ error: 'No se subió ninguna imagen.' });
+
+  const bannerUrl = `/uploads/${req.file.filename}`;
+  db.run(`UPDATE event_info SET banner_url = ? WHERE id = 1`, [bannerUrl], (err) => {
+    if (err) return res.status(500).json({ error: 'Error al guardar la imagen del evento.' });
+    io.emit('refresh-data');
+    res.json({ success: true, message: 'Imagen del evento actualizada con éxito.', banner_url: bannerUrl });
   });
 });
 
@@ -464,6 +522,69 @@ app.post('/api/guests/status', auth, (req, res) => {
           } else {
             io.emit('refresh-data');
             res.json({ success: true, guest: { id: guestId, status: newStatus, food_served: newFoodServed, drink_served: newDrinkServed } });
+          }
+        });
+      }
+    );
+  });
+});
+
+// 9.1 Módulo de Corrección para el Mesero: Modificar Pedido / Servicio en Tiempo Real
+app.post('/api/waiter/order/update', auth, (req, res) => {
+  const { guestId, dietary, notes, food_served, drink_served, status, pin } = req.body;
+  if (!guestId) return res.status(400).json({ error: 'ID de invitado requerido' });
+
+  db.get(`SELECT * FROM guests WHERE id = ?`, [guestId], (err, currentGuest) => {
+    if (err || !currentGuest) return res.status(404).json({ error: 'Invitado no encontrado' });
+
+    // Permisos y Lógica de Modificación:
+    // Si el pedido ya fue marcado como Servido y el usuario es MESERO, exige la clave PIN '1234'
+    const isFullyServed = currentGuest.food_served === 1 && currentGuest.drink_served === 1;
+    const isWaiter = req.user.role !== 'ADMIN';
+
+    if (isFullyServed && isWaiter) {
+      if (!pin || pin.trim() !== '1234') {
+        return res.status(403).json({ error: 'Este pedido ya fue entregado. Ingrese el PIN de Autorización (1234) o solicite la clave del Administrador.' });
+      }
+    }
+
+    const newFoodServed = food_served !== undefined ? (food_served ? 1 : 0) : currentGuest.food_served;
+    const newDrinkServed = drink_served !== undefined ? (drink_served ? 1 : 0) : currentGuest.drink_served;
+    const newDietary = dietary !== undefined ? dietary : currentGuest.dietary;
+    const newNotes = notes !== undefined ? notes.trim() : (currentGuest.notes || '');
+
+    let newStatus = status;
+    if (!newStatus || !['Pending', 'In Progress', 'Served'].includes(newStatus)) {
+      if (newFoodServed === 1 && newDrinkServed === 1) newStatus = 'Served';
+      else if (newFoodServed === 1 || newDrinkServed === 1) newStatus = 'In Progress';
+      else newStatus = 'Pending';
+    }
+
+    const tagStr = newDietary.toLowerCase().includes('vege') ? 'Vegetarian' : (newDietary.toLowerCase().includes('vega') ? 'Vegano' : 'Standard');
+
+    db.run(
+      `UPDATE guests SET status = ?, food_served = ?, drink_served = ?, dietary = ?, notes = ?, tag = ? WHERE id = ?`,
+      [newStatus, newFoodServed, newDrinkServed, newDietary, newNotes, tagStr, guestId],
+      function(updateErr) {
+        if (updateErr) return res.status(500).json({ error: 'Error actualizando pedido del invitado: ' + updateErr.message });
+
+        // Audit Log
+        db.run(`INSERT INTO audit_logs (user_name, action, details) VALUES (?, 'EDIT_ORDER', ?)`, 
+          [req.user.name, `Modificación de pedido (Mesa ${currentGuest.table_id}, Silla ${currentGuest.seat}): ${newDietary} [Notas: ${newNotes}]`]);
+
+        // Recalcular estado de la mesa y emitir Socket.io
+        db.all(`SELECT status, food_served, drink_served FROM guests WHERE table_id = ?`, [currentGuest.table_id], (err2, tableGuests) => {
+          if (!err2 && tableGuests && tableGuests.length > 0) {
+            const allServed = tableGuests.every(g => g.status === 'Served' || (g.food_served === 1 && g.drink_served === 1));
+            const anyServed = tableGuests.some(g => g.status === 'Served' || g.status === 'In Progress' || g.food_served === 1 || g.drink_served === 1);
+            const tableStatus = allServed ? 'Served' : anyServed ? 'In Progress' : 'Pending';
+            db.run(`UPDATE tables SET service_status = ? WHERE id = ?`, [tableStatus, currentGuest.table_id], () => {
+              io.emit('refresh-data');
+              res.json({ success: true, message: 'Pedido modificado exitosamente en tiempo real', guest: { id: guestId, status: newStatus, food_served: newFoodServed, drink_served: newDrinkServed, notes: newNotes } });
+            });
+          } else {
+            io.emit('refresh-data');
+            res.json({ success: true, message: 'Pedido modificado exitosamente en tiempo real', guest: { id: guestId, status: newStatus, food_served: newFoodServed, drink_served: newDrinkServed, notes: newNotes } });
           }
         });
       }
