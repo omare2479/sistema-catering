@@ -1,0 +1,1597 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Zolimar Catering & Eventos</title>
+  
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://unpkg.com/lucide@latest"></script>
+  <script src="/socket.io/socket.io.js"></script>
+
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            zolimar: {
+              dark: '#0f291e',
+              green: '#1b4332',
+              gold: '#c5a059',
+              goldLight: '#e5ca8b',
+              goldBg: '#f9f6f0'
+            },
+            status: {
+              pending: '#ef4444',    /* ROJO: Pendiente / No llegó */
+              progress: '#f59e0b',   /* AMARILLO: In Progress / En proceso */
+              served: '#6b7280'      /* PLOMO: Served / Atendido con comida y agua */
+            }
+          }
+        }
+      }
+    }
+  </script>
+</head>
+<body class="bg-gray-100 flex justify-center min-h-screen">
+
+  <!-- NOTIFICACIÓN TOAST -->
+  <div id="toast" class="fixed top-4 left-1/2 -translate-x-1/2 z-50 bg-gray-900 text-white text-xs font-bold px-4 py-2.5 rounded-xl shadow-2xl transition-all duration-300 opacity-0 pointer-events-none flex items-center space-x-2 border border-zolimar-gold">
+    <i data-lucide="check-circle" class="w-4 h-4 text-emerald-400"></i>
+    <span id="toast-msg">Acción realizada con éxito</span>
+  </div>
+
+  <div class="w-full max-w-md bg-white min-h-screen flex flex-col shadow-2xl relative pb-20">
+
+    <!-- MODAL DE INICIO DE SESIÓN -->
+    <div id="login-modal" class="fixed inset-0 bg-zolimar-dark/95 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+      <div class="bg-white rounded-2xl p-6 w-full max-w-xs shadow-2xl border-2 border-zolimar-gold text-center relative">
+        <h2 class="text-zolimar-gold font-serif italic text-2xl font-bold mb-1">Zolimar</h2>
+        <p class="text-xs text-gray-500 mb-4">Acceso de Personal & Administración</p>
+        
+        <form onsubmit="handleLoginSubmit(event)" class="space-y-3 text-left">
+          <div>
+            <label class="text-[10px] font-bold text-gray-600 uppercase">Correo</label>
+            <input id="login-email" type="email" value="admin@zolimar.com" required class="w-full text-xs p-2.5 border rounded-lg focus:ring-2 focus:ring-zolimar-gold outline-none">
+          </div>
+          <div>
+            <label class="text-[10px] font-bold text-gray-600 uppercase">Contraseña</label>
+            <div class="relative">
+              <input id="login-pass" type="password" value="admin123" required class="w-full text-xs p-2.5 pr-8 border rounded-lg focus:ring-2 focus:ring-zolimar-gold outline-none">
+              <button type="button" onclick="togglePasswordVisibility('login-pass', 'pass-eye-icon')" class="absolute right-2.5 top-2.5 text-gray-400 hover:text-gray-600">
+                <i id="pass-eye-icon" data-lucide="eye" class="w-4 h-4"></i>
+              </button>
+            </div>
+          </div>
+          <button type="submit" class="w-full bg-zolimar-green text-zolimar-gold font-bold py-2.5 rounded-lg text-sm hover:bg-zolimar-dark transition mt-2 flex items-center justify-center space-x-1">
+            <span>Iniciar Sesión</span>
+          </button>
+          <div id="login-error" class="text-[11px] text-red-600 font-semibold text-center hidden"></div>
+          
+          <div class="text-[10px] text-gray-400 text-center pt-2 border-t border-gray-100">
+            Admin: <b>admin@zolimar.com</b> (admin123)<br>
+            Mesero: <b>mesero@zolimar.com</b> (mesero123)
+          </div>
+        </form>
+      </div>
+    </div>
+
+    <!-- MODAL DE CAMBIAR CONTRASEÑA -->
+    <div id="change-password-modal" class="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
+      <div class="bg-white rounded-2xl p-5 w-full max-w-xs shadow-2xl border border-zolimar-gold relative">
+        <button onclick="closeChangePasswordModal()" class="absolute top-3 right-3 text-gray-400 hover:text-gray-600">
+          <i data-lucide="x" class="w-5 h-5"></i>
+        </button>
+        <h3 class="text-zolimar-green font-bold text-base mb-1">Cambiar Contraseña</h3>
+        <p class="text-[11px] text-gray-500 mb-3">Actualiza tu clave de acceso</p>
+
+        <form onsubmit="handleChangePasswordSubmit(event)" class="space-y-3">
+          <div>
+            <label class="text-[10px] font-bold text-gray-600 uppercase">Contraseña Actual</label>
+            <input id="cp-current" type="password" required class="w-full text-xs p-2 border rounded-lg focus:ring-2 focus:ring-zolimar-gold outline-none">
+          </div>
+          <div>
+            <label class="text-[10px] font-bold text-gray-600 uppercase">Nueva Contraseña</label>
+            <input id="cp-new" type="password" required minlength="4" class="w-full text-xs p-2 border rounded-lg focus:ring-2 focus:ring-zolimar-gold outline-none">
+          </div>
+          <div>
+            <label class="text-[10px] font-bold text-gray-600 uppercase">Confirmar Nueva Contraseña</label>
+            <input id="cp-confirm" type="password" required minlength="4" class="w-full text-xs p-2 border rounded-lg focus:ring-2 focus:ring-zolimar-gold outline-none">
+          </div>
+          <div id="cp-error" class="text-[11px] text-red-600 font-semibold hidden"></div>
+          <div id="cp-success" class="text-[11px] text-emerald-600 font-semibold hidden"></div>
+          
+          <button type="submit" class="w-full bg-zolimar-dark text-zolimar-gold font-bold py-2 rounded-lg text-xs hover:bg-zolimar-green transition">
+            Guardar Contraseña
+          </button>
+        </form>
+      </div>
+    </div>
+
+    <!-- MODAL PASO 1 SEGURIDAD DE REVERSIÓN ADMIN -->
+    <div id="undo-step1-modal" class="fixed inset-0 bg-black/70 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
+      <div class="bg-white rounded-2xl p-5 w-full max-w-xs shadow-2xl border-2 border-amber-500 relative space-y-3">
+        <button onclick="closeUndoModals()" class="absolute top-3 right-3 text-gray-400 hover:text-gray-600">
+          <i data-lucide="x" class="w-5 h-5"></i>
+        </button>
+
+        <div class="text-center">
+          <div class="w-12 h-12 bg-amber-100 text-amber-600 rounded-full flex items-center justify-center mx-auto mb-2">
+            <i data-lucide="alert-triangle" class="w-6 h-6"></i>
+          </div>
+          <h3 class="text-amber-900 font-bold text-base">PASO 1: Confirmación de Reversión</h3>
+          <p class="text-xs text-gray-600 mt-1">¿Deseas revertir los cambios de datos cargados anteriormente?</p>
+        </div>
+
+        <div class="bg-amber-50 p-3 rounded-xl border border-amber-200 text-[11px] text-amber-900 space-y-1">
+          <p><b>Advertencia:</b> Esta acción eliminará los datos actuales y restaurará la copia previa registrada en la auditoría.</p>
+        </div>
+
+        <div class="flex items-center space-x-2 pt-1">
+          <input type="checkbox" id="undo-check-1" onchange="toggleUndoStep1Btn()" class="w-4 h-4 accent-amber-600 cursor-pointer">
+          <label for="undo-check-1" class="text-[11px] font-bold text-gray-700 cursor-pointer select-none">Entiendo las consecuencias</label>
+        </div>
+
+        <div class="grid grid-cols-2 gap-2 pt-2">
+          <button onclick="closeUndoModals()" class="bg-gray-200 text-gray-800 font-bold py-2 rounded-xl text-xs hover:bg-gray-300">
+            Cancelar
+          </button>
+          <button id="undo-btn-step1" disabled onclick="goToUndoStep2()" class="bg-amber-600 text-white font-bold py-2 rounded-xl text-xs opacity-50 cursor-not-allowed hover:bg-amber-700 transition">
+            Paso 2 ➔
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- MODAL PASO 2 SEGURIDAD DEFINITIVA REVERSIÓN ADMIN -->
+    <div id="undo-step2-modal" class="fixed inset-0 bg-black/80 backdrop-blur-md z-50 flex items-center justify-center p-4 hidden">
+      <div class="bg-white rounded-2xl p-5 w-full max-w-xs shadow-2xl border-2 border-red-600 relative space-y-3">
+        <button onclick="closeUndoModals()" class="absolute top-3 right-3 text-gray-400 hover:text-gray-600">
+          <i data-lucide="x" class="w-5 h-5"></i>
+        </button>
+
+        <div class="text-center">
+          <div class="w-12 h-12 bg-red-100 text-red-600 rounded-full flex items-center justify-center mx-auto mb-2 animate-bounce">
+            <i data-lucide="shield-alert" class="w-6 h-6"></i>
+          </div>
+          <h3 class="text-red-700 font-bold text-base">PASO 2: Confirmación Definitiva</h3>
+          <p class="text-xs text-gray-700 mt-1 font-semibold">¿ESTÁS COMPLETAMENTE SEGURO DE BORRAR TODO Y REVERTIR?</p>
+        </div>
+
+        <div class="space-y-2">
+          <label class="text-[10px] font-bold text-gray-600 uppercase block">Escribe "REVERTIR" para confirmar:</label>
+          <input type="text" id="undo-confirm-input" placeholder="REVERTIR" oninput="validateUndoStep2Input()" class="w-full text-xs p-2.5 border border-red-400 rounded-xl focus:ring-2 focus:ring-red-600 outline-none uppercase font-bold text-center">
+        </div>
+
+        <div class="grid grid-cols-2 gap-2 pt-2">
+          <button onclick="closeUndoModals()" class="bg-gray-200 text-gray-800 font-bold py-2.5 rounded-xl text-xs hover:bg-gray-300">
+            Cancelar
+          </button>
+          <button id="undo-btn-step2" disabled onclick="executeUndoLastAction()" class="bg-red-600 text-white font-bold py-2.5 rounded-xl text-xs opacity-50 cursor-not-allowed hover:bg-red-700 transition flex items-center justify-center space-x-1 shadow-lg">
+            <i data-lucide="trash-2" class="w-4 h-4"></i>
+            <span>¡SÍ, REVERTIR!</span>
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- MODAL INFORME 1: ASISTENCIA E INGRESO DE INVITADOS -->
+    <div id="attendance-report-modal" class="fixed inset-0 bg-black/70 backdrop-blur-sm z-50 flex items-center justify-center p-3 hidden">
+      <div class="bg-white rounded-2xl w-full max-w-sm max-h-[85vh] flex flex-col shadow-2xl border-2 border-zolimar-gold relative">
+        <header class="bg-zolimar-dark text-white p-4 rounded-t-2xl flex items-center justify-between">
+          <div class="flex items-center space-x-2">
+            <i data-lucide="clipboard-list" class="w-5 h-5 text-zolimar-gold"></i>
+            <div>
+              <h3 class="font-bold text-sm text-zolimar-gold">Informe de Asistencia</h3>
+              <p class="text-[10px] text-gray-300">Invitados que ingresaron vs no ingresaron</p>
+            </div>
+          </div>
+          <button onclick="closeAttendanceReportModal()" class="text-gray-300 hover:text-white">
+            <i data-lucide="x" class="w-5 h-5"></i>
+          </button>
+        </header>
+
+        <div class="p-3 bg-gray-50 border-b space-y-2">
+          <!-- TARJETAS CON RESUMEN -->
+          <div class="grid grid-cols-3 gap-2 text-center">
+            <div class="bg-white p-2 rounded-xl border shadow-sm">
+              <span class="text-[9px] text-gray-500 uppercase font-bold block">Total</span>
+              <span id="rep-att-total" class="text-base font-extrabold text-gray-900">0</span>
+            </div>
+            <div class="bg-emerald-50 p-2 rounded-xl border border-emerald-200 shadow-sm">
+              <span class="text-[9px] text-emerald-800 uppercase font-bold block">Ingresaron</span>
+              <span id="rep-att-entered" class="text-base font-extrabold text-emerald-700">0</span>
+            </div>
+            <div class="bg-red-50 p-2 rounded-xl border border-red-200 shadow-sm">
+              <span class="text-[9px] text-red-800 uppercase font-bold block">Faltan</span>
+              <span id="rep-att-pending" class="text-base font-extrabold text-red-600">0</span>
+            </div>
+          </div>
+
+          <!-- BARRA DE PORCENTAJE -->
+          <div>
+            <div class="flex justify-between text-[10px] font-bold text-gray-600 mb-1">
+              <span>Porcentaje de Asistencia:</span>
+              <span id="rep-att-percent" class="text-emerald-700">0%</span>
+            </div>
+            <div class="w-full h-2.5 bg-gray-200 rounded-full overflow-hidden">
+              <div id="rep-att-bar" class="h-full bg-emerald-500 transition-all duration-500" style="width: 0%;"></div>
+            </div>
+          </div>
+
+          <!-- BOTONES FILTRO DENTRO DEL INFORME -->
+          <div class="flex justify-center space-x-1 pt-1">
+            <button onclick="filterAttReport('all')" id="att-filter-all" class="px-2.5 py-1 rounded-lg text-[10px] font-bold bg-zolimar-dark text-zolimar-gold">Todos</button>
+            <button onclick="filterAttReport('entered')" id="att-filter-entered" class="px-2.5 py-1 rounded-lg text-[10px] font-bold bg-white text-gray-600 border">Ingresaron</button>
+            <button onclick="filterAttReport('pending')" id="att-filter-pending" class="px-2.5 py-1 rounded-lg text-[10px] font-bold bg-white text-gray-600 border">Faltan por ingresar</button>
+          </div>
+
+          <!-- NUEVO: CAMPO DE BÚSQUEDA DENTRO DEL INFORME DE ASISTENCIA -->
+          <div class="relative pt-1">
+            <i data-lucide="search" class="w-3.5 h-3.5 absolute left-3 top-3 text-gray-400"></i>
+            <input id="att-search-input" type="text" placeholder="Buscar invitado o mesa en este informe..." 
+                   oninput="renderAttendanceReport()" 
+                   class="w-full pl-8 pr-3 py-1.5 rounded-full text-xs text-gray-800 focus:outline-none focus:ring-2 focus:ring-zolimar-gold bg-white border">
+          </div>
+        </div>
+
+        <!-- LISTA DE INVITADOS DEL INFORME DE ASISTENCIA -->
+        <div class="flex-1 overflow-y-auto p-3 space-y-1.5" id="rep-att-list"></div>
+
+        <footer class="p-3 bg-gray-100 border-t rounded-b-2xl flex justify-between items-center">
+          <span class="text-[10px] text-gray-500 font-semibold">Actualizado en tiempo real</span>
+          <button onclick="printReport('rep-att-list')" class="bg-zolimar-green text-zolimar-gold font-bold px-3 py-1.5 rounded-lg text-xs flex items-center space-x-1 hover:bg-zolimar-dark">
+            <i data-lucide="printer" class="w-4 h-4"></i>
+            <span>Imprimir</span>
+          </button>
+        </footer>
+      </div>
+    </div>
+
+    <!-- MODAL INFORME 2: ENTREGA DE COMIDA Y BEBIDAS -->
+    <div id="food-drink-report-modal" class="fixed inset-0 bg-black/70 backdrop-blur-sm z-50 flex items-center justify-center p-3 hidden">
+      <div class="bg-white rounded-2xl w-full max-w-sm max-h-[85vh] flex flex-col shadow-2xl border-2 border-emerald-600 relative">
+        <header class="bg-zolimar-green text-white p-4 rounded-t-2xl flex items-center justify-between">
+          <div class="flex items-center space-x-2">
+            <i data-lucide="utensils" class="w-5 h-5 text-zolimar-gold"></i>
+            <div>
+              <h3 class="font-bold text-sm text-zolimar-gold">Informe de Comida & Bebidas</h3>
+              <p class="text-[10px] text-gray-200">Entrega de platos y licores por usuario</p>
+            </div>
+          </div>
+          <button onclick="closeFoodDrinkReportModal()" class="text-gray-300 hover:text-white">
+            <i data-lucide="x" class="w-5 h-5"></i>
+          </button>
+        </header>
+
+        <div class="p-3 bg-gray-50 border-b space-y-2">
+          <!-- TARJETAS CON RESUMEN -->
+          <div class="grid grid-cols-3 gap-2 text-center">
+            <div class="bg-emerald-50 p-2 rounded-xl border border-emerald-200 shadow-sm">
+              <span class="text-[9px] text-emerald-800 uppercase font-bold block">🍲 Comida</span>
+              <span id="rep-fd-food" class="text-base font-extrabold text-emerald-700">0</span>
+            </div>
+            <div class="bg-blue-50 p-2 rounded-xl border border-blue-200 shadow-sm">
+              <span class="text-[9px] text-blue-800 uppercase font-bold block">🥤 Bebida</span>
+              <span id="rep-fd-drink" class="text-base font-extrabold text-blue-700">0</span>
+            </div>
+            <div class="bg-gray-100 p-2 rounded-xl border border-gray-300 shadow-sm">
+              <span class="text-[9px] text-gray-800 uppercase font-bold block">🔘 Completo</span>
+              <span id="rep-fd-complete" class="text-base font-extrabold text-gray-700">0</span>
+            </div>
+          </div>
+
+          <!-- BOTONES FILTRO DENTRO DEL INFORME DE COMIDA Y BEBIDA -->
+          <div class="flex justify-center space-x-1 pt-1">
+            <button onclick="filterFdReport('all')" id="fd-filter-all" class="px-2.5 py-1 rounded-lg text-[10px] font-bold bg-zolimar-dark text-zolimar-gold">Todos</button>
+            <button onclick="filterFdReport('food')" id="fd-filter-food" class="px-2.5 py-1 rounded-lg text-[10px] font-bold bg-white text-gray-600 border">Con Comida</button>
+            <button onclick="filterFdReport('drink')" id="fd-filter-drink" class="px-2.5 py-1 rounded-lg text-[10px] font-bold bg-white text-gray-600 border">Con Bebida</button>
+            <button onclick="filterFdReport('complete')" id="fd-filter-complete" class="px-2.5 py-1 rounded-lg text-[10px] font-bold bg-white text-gray-600 border">Completo (Plomo)</button>
+          </div>
+
+          <!-- NUEVO: CAMPO DE BÚSQUEDA DENTRO DEL INFORME DE COMIDA & BEBIDAS -->
+          <div class="relative pt-1">
+            <i data-lucide="search" class="w-3.5 h-3.5 absolute left-3 top-3 text-gray-400"></i>
+            <input id="fd-search-input" type="text" placeholder="Buscar por nombre, dieta o mesa en este informe..." 
+                   oninput="renderFoodDrinkReport()" 
+                   class="w-full pl-8 pr-3 py-1.5 rounded-full text-xs text-gray-800 focus:outline-none focus:ring-2 focus:ring-emerald-500 bg-white border">
+          </div>
+        </div>
+
+        <!-- LISTA DE INVITADOS DEL INFORME DE COMIDA & BEBIDAS -->
+        <div class="flex-1 overflow-y-auto p-3 space-y-1.5" id="rep-fd-list"></div>
+
+        <footer class="p-3 bg-gray-100 border-t rounded-b-2xl flex justify-between items-center">
+          <span class="text-[10px] text-gray-500 font-semibold">Actualizado en tiempo real</span>
+          <button onclick="printReport('rep-fd-list')" class="bg-zolimar-green text-zolimar-gold font-bold px-3 py-1.5 rounded-lg text-xs flex items-center space-x-1 hover:bg-zolimar-dark">
+            <i data-lucide="printer" class="w-4 h-4"></i>
+            <span>Imprimir</span>
+          </button>
+        </footer>
+      </div>
+    </div>
+
+    <!-- MODAL DE CONTROL INDIVIDUAL DE INVITADO -->
+    <div id="guest-service-modal" class="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
+      <div class="bg-white rounded-2xl p-5 w-full max-w-xs shadow-2xl border-2 border-zolimar-gold relative space-y-4">
+        <button onclick="closeGuestServiceModal()" class="absolute top-3 right-3 text-gray-400 hover:text-gray-600">
+          <i data-lucide="x" class="w-5 h-5"></i>
+        </button>
+
+        <div>
+          <span id="gsm-seat-badge" class="text-[10px] bg-amber-100 text-amber-900 font-bold px-2 py-0.5 rounded-full">Silla 1</span>
+          <h3 id="gsm-guest-name" class="text-gray-900 font-bold text-lg leading-tight mt-1">Ana Gómez</h3>
+          <p id="gsm-table-info" class="text-[11px] text-gray-500">Mesa 1 - Servicio Individual</p>
+        </div>
+
+        <div class="space-y-3 bg-gray-50 p-3 rounded-xl border border-gray-200">
+          <div class="flex items-center justify-between">
+            <div class="flex items-center space-x-2">
+              <i data-lucide="utensils" class="w-4 h-4 text-emerald-700"></i>
+              <span class="text-xs font-bold text-gray-800">Comida Entregada</span>
+            </div>
+            <input id="gsm-food-check" type="checkbox" onchange="onGsmCheckboxChange()" class="w-5 h-5 accent-emerald-600 cursor-pointer">
+          </div>
+
+          <div class="flex items-center justify-between border-t pt-2">
+            <div class="flex items-center space-x-2">
+              <i data-lucide="droplet" class="w-4 h-4 text-blue-600"></i>
+              <span class="text-xs font-bold text-gray-800">Agua / Bebida Entregada</span>
+            </div>
+            <input id="gsm-drink-check" type="checkbox" onchange="onGsmCheckboxChange()" class="w-5 h-5 accent-blue-600 cursor-pointer">
+          </div>
+        </div>
+
+        <div>
+          <label class="text-[10px] font-bold text-gray-600 uppercase mb-1 block">Estado del Invitado</label>
+          <div class="grid grid-cols-3 gap-1 bg-gray-100 p-1 rounded-xl">
+            <button id="gsm-btn-pending" onclick="setGsmStatus('Pending')" class="py-2 text-[10px] font-bold rounded-lg border transition">
+              🔴 ROJO<br><span class="text-[9px] font-normal">Pendiente</span>
+            </button>
+            <button id="gsm-btn-progress" onclick="setGsmStatus('In Progress')" class="py-2 text-[10px] font-bold rounded-lg border transition">
+              🟡 AMARILLO<br><span class="text-[9px] font-normal">En Proceso</span>
+            </button>
+            <button id="gsm-btn-served" onclick="setGsmStatus('Served')" class="py-2 text-[10px] font-bold rounded-lg border transition">
+              🔘 PLOMO<br><span class="text-[9px] font-normal">Servido</span>
+            </button>
+          </div>
+        </div>
+
+        <button onclick="saveGuestServiceState()" class="w-full bg-zolimar-dark text-zolimar-gold font-bold py-2.5 rounded-xl text-xs hover:bg-zolimar-green transition shadow-md flex items-center justify-center space-x-1">
+          <i data-lucide="check" class="w-4 h-4"></i>
+          <span>Guardar Servicio</span>
+        </button>
+      </div>
+    </div>
+
+    <!-- MODAL PARA AGREGAR INVITADO MANUALMENTE -->
+    <div id="add-guest-modal" class="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
+      <div class="bg-white rounded-2xl p-5 w-full max-w-xs shadow-2xl border border-zolimar-green relative">
+        <button onclick="closeAddGuestModal()" class="absolute top-3 right-3 text-gray-400 hover:text-gray-600">
+          <i data-lucide="x" class="w-5 h-5"></i>
+        </button>
+        <h3 class="text-zolimar-green font-bold text-base mb-1">Agregar Nuevo Invitado</h3>
+        <p class="text-[11px] text-gray-500 mb-3">Registra un invitado en el sistema</p>
+
+        <form onsubmit="handleAddGuestSubmit(event)" class="space-y-3">
+          <div>
+            <label class="text-[10px] font-bold text-gray-600 uppercase">Nombre Completo</label>
+            <input id="ag-name" type="text" placeholder="Ej. Ana Gómez" required class="w-full text-xs p-2 border rounded-lg focus:ring-2 focus:ring-zolimar-gold outline-none">
+          </div>
+          <div class="grid grid-cols-2 gap-2">
+            <div>
+              <label class="text-[10px] font-bold text-gray-600 uppercase">Mesa</label>
+              <select id="ag-table" class="w-full text-xs p-2 border rounded-lg focus:ring-2 focus:ring-zolimar-gold outline-none bg-white">
+              </select>
+            </div>
+            <div>
+              <label class="text-[10px] font-bold text-gray-600 uppercase">Silla</label>
+              <select id="ag-seat" class="w-full text-xs p-2 border rounded-lg focus:ring-2 focus:ring-zolimar-gold outline-none bg-white">
+              </select>
+            </div>
+          </div>
+          <div>
+            <label class="text-[10px] font-bold text-gray-600 uppercase">Dieta / Preferencia</label>
+            <select id="ag-dietary" class="w-full text-xs p-2 border rounded-lg focus:ring-2 focus:ring-zolimar-gold outline-none bg-white">
+              <option value="Standard">Standard (Normal)</option>
+              <option value="Vegetariano">Vegetariano</option>
+              <option value="Vegano">Vegano</option>
+              <option value="Sin Gluten">Sin Gluten</option>
+              <option value="Infantil">Infantil</option>
+            </select>
+          </div>
+          <div id="ag-error" class="text-[11px] text-red-600 font-semibold hidden"></div>
+          
+          <button type="submit" class="w-full bg-zolimar-green text-zolimar-gold font-bold py-2 rounded-lg text-xs hover:bg-zolimar-dark transition flex items-center justify-center space-x-1">
+            <i data-lucide="user-plus" class="w-4 h-4"></i>
+            <span>Guardar Invitado</span>
+          </button>
+        </form>
+      </div>
+    </div>
+
+    <!-- HEADER SUPERIOR PRINCIPAL -->
+    <header class="bg-zolimar-dark text-white px-4 pt-3 pb-2 border-b border-zolimar-gold/30">
+      <div class="flex justify-between items-center mb-1">
+        <div class="flex items-center space-x-2">
+          <span class="text-zolimar-gold font-serif italic text-xl font-bold">Zolimar</span>
+          <span class="text-[10px] text-zolimar-goldLight tracking-widest uppercase">Catering</span>
+        </div>
+        <div class="flex items-center space-x-2">
+          <span id="user-name" class="text-[10px] text-gray-300 hidden font-medium"></span>
+          <span id="user-badge" class="text-[10px] bg-zolimar-gold/20 text-zolimar-gold px-2 py-0.5 rounded-full font-bold">Admin</span>
+          <button onclick="openChangePasswordModal()" title="Cambiar Contraseña" class="p-1 text-zolimar-goldLight hover:text-white transition">
+            <i data-lucide="key-round" class="w-4 h-4"></i>
+          </button>
+          <button onclick="logoutUser()" title="Cerrar Sesión" class="p-1 text-red-400 hover:text-red-300 transition">
+            <i data-lucide="log-out" class="w-4 h-4"></i>
+          </button>
+        </div>
+      </div>
+
+      <!-- BOTONES DE INFORMES SOLICITADOS -->
+      <div class="flex space-x-2 pt-1 pb-1">
+        <button onclick="openAttendanceReportModal()" class="flex-1 bg-zolimar-green text-zolimar-gold border border-zolimar-gold/40 text-[10px] font-bold py-1.5 rounded-lg flex items-center justify-center space-x-1 hover:bg-zolimar-dark transition shadow">
+          <i data-lucide="clipboard-list" class="w-3.5 h-3.5"></i>
+          <span>Informe Asistencia</span>
+        </button>
+        <button onclick="openFoodDrinkReportModal()" class="flex-1 bg-zolimar-green text-zolimar-gold border border-zolimar-gold/40 text-[10px] font-bold py-1.5 rounded-lg flex items-center justify-center space-x-1 hover:bg-zolimar-dark transition shadow">
+          <i data-lucide="utensils" class="w-3.5 h-3.5"></i>
+          <span>Informe Comida & Bebidas</span>
+        </button>
+      </div>
+    </header>
+
+    <!-- 1. DASHBOARD DE MESAS -->
+    <div id="view-dashboard" class="flex-1 flex flex-col">
+      <div class="bg-zolimar-green px-4 py-2 text-white">
+        <div class="flex space-x-2 mb-2">
+          <div class="relative flex-1">
+            <i data-lucide="search" class="w-4 h-4 absolute left-3 top-2.5 text-gray-400"></i>
+            <input id="search-input" type="text" placeholder="Buscar por nombre (ej. Ana, Carlos...)" oninput="onSearchInput(this.value)" 
+                   class="w-full pl-9 pr-3 py-1.5 rounded-full text-xs text-gray-800 focus:outline-none focus:ring-2 focus:ring-zolimar-gold">
+          </div>
+          <button onclick="openAddGuestModal()" class="bg-zolimar-gold text-zolimar-dark font-bold px-3 py-1.5 rounded-full text-xs flex items-center space-x-1 hover:bg-zolimar-goldLight transition shadow">
+            <i data-lucide="plus" class="w-4 h-4"></i>
+            <span>Invitado</span>
+          </button>
+        </div>
+
+        <!-- LEYENDA CON COLORES SOLICITADOS -->
+        <div class="flex justify-around items-center text-[11px] text-gray-200">
+          <div class="flex items-center space-x-1.5"><span class="w-3 h-3 rounded-full bg-red-500 inline-block border border-white"></span><span class="font-semibold text-red-200">🔴 Pendiente</span></div>
+          <div class="flex items-center space-x-1.5"><span class="w-3 h-3 rounded-full bg-yellow-400 inline-block border border-white"></span><span class="font-semibold text-yellow-200">🟡 En Proceso</span></div>
+          <div class="flex items-center space-x-1.5"><span class="w-3 h-3 rounded-full bg-gray-400 inline-block border border-white"></span><span class="font-semibold text-gray-200">🔘 Servido (Plomo)</span></div>
+        </div>
+      </div>
+
+      <div class="flex-1 p-4 overflow-y-auto bg-gray-50">
+        <div id="tables-grid" class="grid grid-cols-4 gap-4 justify-items-center"></div>
+      </div>
+    </div>
+
+    <!-- 2. DETALLE DE MESA -->
+    <div id="view-table-detail" class="flex-1 flex flex-col hidden overflow-y-auto">
+      <header class="bg-white border-b px-4 py-3 flex items-center justify-between shadow-sm sticky top-0 z-30">
+        <button onclick="navigate('dashboard')" class="text-blue-600 flex items-center text-sm font-semibold">
+          <i data-lucide="chevron-left" class="w-5 h-5 mr-0.5"></i> Volver
+        </button>
+        <h2 id="detail-table-title" class="font-bold text-gray-800 text-sm">Mesa 1 - Vista Detallada</h2>
+        <div class="w-10"></div>
+      </header>
+
+      <div class="relative bg-gradient-to-b from-emerald-50 via-amber-50 to-orange-50 flex items-center justify-center p-4">
+        <div class="relative w-72 h-72 flex items-center justify-center">
+          <div class="w-36 h-36 rounded-full bg-amber-900 border-4 border-amber-950 flex items-center justify-center shadow-2xl z-10 text-center text-white">
+            <div>
+              <i data-lucide="flower" class="w-6 h-6 text-pink-300 mx-auto"></i>
+              <div id="detail-center-table-num" class="text-xs font-bold mt-0.5">Mesa 1</div>
+            </div>
+          </div>
+          <div id="detail-chairs-container" class="absolute inset-0"></div>
+        </div>
+      </div>
+
+      <!-- PANEL DE CONTROL DE SERVICIOS Y MENÚ -->
+      <div class="bg-white p-4 space-y-4 shadow-lg">
+        <div class="text-center">
+          <span class="text-xs font-bold text-gray-600 uppercase tracking-wider block mb-1">Estado General del Servicio</span>
+          <div class="grid grid-cols-3 gap-1.5 bg-gray-100 p-1.5 rounded-xl border">
+            <button id="btn-status-pending" onclick="updateTableService('Pending')" class="py-2 text-xs font-bold rounded-lg transition shadow-sm">
+              🔴 Pending
+            </button>
+            <button id="btn-status-progress" onclick="updateTableService('In Progress')" class="py-2 text-xs font-bold rounded-lg transition shadow-sm">
+              🟡 In Progress
+            </button>
+            <button id="btn-status-served" onclick="updateTableService('Served')" class="py-2 text-xs font-bold rounded-lg transition shadow-sm">
+              🔘 Served
+            </button>
+          </div>
+        </div>
+
+        <!-- SECCIÓN DE COMIDA Y BEBIDA CON SELECCIÓN DE TIPO -->
+        <div class="space-y-3 pt-1">
+          
+          <!-- SECCIÓN DE COMIDA -->
+          <div class="p-3.5 bg-emerald-50/70 rounded-2xl border border-emerald-200 space-y-2.5">
+            <div class="flex items-center justify-between">
+              <div class="flex items-center space-x-2">
+                <i data-lucide="utensils" class="w-4 h-4 text-emerald-800"></i>
+                <span class="text-xs font-bold text-emerald-950">Servicio de Comida</span>
+              </div>
+              <input id="food-toggle" type="checkbox" onchange="updateTableToggles()" class="w-5 h-5 accent-emerald-600 cursor-pointer">
+            </div>
+
+            <div>
+              <label class="text-[10px] font-bold text-gray-600 uppercase">Menú / Plato a Servir</label>
+              <div class="flex space-x-2 mt-1">
+                <input id="food-type-input" type="text" placeholder="Ej. Lomo Saltado, Vegetariano..." 
+                       onchange="updateTableTypes()"
+                       class="flex-1 text-xs p-2 border border-emerald-300 rounded-lg focus:ring-2 focus:ring-emerald-500 outline-none bg-white">
+                <button onclick="updateTableTypes()" class="bg-emerald-700 text-white text-xs font-bold px-3 py-1.5 rounded-lg hover:bg-emerald-800 transition active:scale-95">
+                  Guardar
+                </button>
+              </div>
+              <!-- Presets Rápidos de Comida -->
+              <div class="flex flex-wrap gap-1.5 mt-2">
+                <button type="button" onclick="setFoodType('Menú Estándar')" class="text-[10px] bg-emerald-100 text-emerald-900 border border-emerald-300 px-2.5 py-1 rounded-lg hover:bg-emerald-200 font-bold active:scale-95 transition">Estándar</button>
+                <button type="button" onclick="setFoodType('Vegetariano')" class="text-[10px] bg-emerald-100 text-emerald-900 border border-emerald-300 px-2.5 py-1 rounded-lg hover:bg-emerald-200 font-bold active:scale-95 transition">Vegetariano</button>
+                <button type="button" onclick="setFoodType('Vegano')" class="text-[10px] bg-emerald-100 text-emerald-900 border border-emerald-300 px-2.5 py-1 rounded-lg hover:bg-emerald-200 font-bold active:scale-95 transition">Vegano</button>
+                <button type="button" onclick="setFoodType('Sin Gluten')" class="text-[10px] bg-emerald-100 text-emerald-900 border border-emerald-300 px-2.5 py-1 rounded-lg hover:bg-emerald-200 font-bold active:scale-95 transition">Sin Gluten</button>
+                <button type="button" onclick="setFoodType('Menú Infantil')" class="text-[10px] bg-emerald-100 text-emerald-900 border border-emerald-300 px-2.5 py-1 rounded-lg hover:bg-emerald-200 font-bold active:scale-95 transition">Infantil</button>
+              </div>
+            </div>
+          </div>
+
+          <!-- SECCIÓN DE BEBIDA -->
+          <div class="p-3.5 bg-blue-50/70 rounded-2xl border border-blue-200 space-y-2.5">
+            <div class="flex items-center justify-between">
+              <div class="flex items-center space-x-2">
+                <i data-lucide="wine" class="w-4 h-4 text-blue-800"></i>
+                <span class="text-xs font-bold text-blue-950">Servicio de Bebida & Licores</span>
+              </div>
+              <input id="drink-toggle" type="checkbox" onchange="updateTableToggles()" class="w-5 h-5 accent-blue-600 cursor-pointer">
+            </div>
+
+            <div>
+              <label class="text-[10px] font-bold text-gray-600 uppercase">Bebida / Licores a Servir</label>
+              <div class="flex space-x-2 mt-1">
+                <input id="drink-type-input" type="text" placeholder="Ej. Vino Tinto, Cerveza, Cocteles..." 
+                       onchange="updateTableTypes()"
+                       class="flex-1 text-xs p-2 border border-blue-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none bg-white">
+                <button onclick="updateTableTypes()" class="bg-blue-700 text-white text-xs font-bold px-3 py-1.5 rounded-lg hover:bg-blue-800 transition active:scale-95">
+                  Guardar
+                </button>
+              </div>
+              <!-- Presets Rápidos de Bebida -->
+              <div class="flex flex-wrap gap-1.5 mt-2">
+                <button type="button" onclick="setDrinkType('Agua & Gaseosa')" class="text-[10px] bg-blue-100 text-blue-900 border border-blue-300 px-2.5 py-1 rounded-lg hover:bg-blue-200 font-bold active:scale-95 transition">Agua & Gaseosa</button>
+                <button type="button" onclick="setDrinkType('Vino Tinto / Blanco')" class="text-[10px] bg-blue-100 text-blue-900 border border-blue-300 px-2.5 py-1 rounded-lg hover:bg-blue-200 font-bold active:scale-95 transition">Vinos</button>
+                <button type="button" onclick="setDrinkType('Cerveza Artesanal')" class="text-[10px] bg-blue-100 text-blue-900 border border-blue-300 px-2.5 py-1 rounded-lg hover:bg-blue-200 font-bold active:scale-95 transition">Cerveza</button>
+                <button type="button" onclick="setDrinkType('Coctelería Zolimar')" class="text-[10px] bg-blue-100 text-blue-900 border border-blue-300 px-2.5 py-1 rounded-lg hover:bg-blue-200 font-bold active:scale-95 transition">Cocteles</button>
+                <button type="button" onclick="setDrinkType('Whisky & Bar Libre')" class="text-[10px] bg-blue-100 text-blue-900 border border-blue-300 px-2.5 py-1 rounded-lg hover:bg-blue-200 font-bold active:scale-95 transition">Whisky & Bar</button>
+              </div>
+            </div>
+          </div>
+
+        </div>
+      </div>
+    </div>
+
+    <!-- 3. LISTA DE INVITADOS -->
+    <div id="view-guests" class="flex-1 flex flex-col hidden bg-white">
+      <header class="bg-zolimar-dark text-white px-4 py-3 flex items-center justify-between">
+        <span class="text-zolimar-gold font-serif italic text-lg font-bold">Zolimar</span>
+        <span class="text-xs font-semibold text-gray-200">Lista de Invitados</span>
+      </header>
+
+      <!-- Panel Admin para subir Excel y Deshacer con 2 confirmaciones de seguridad -->
+      <div id="admin-panel" class="hidden p-3 bg-amber-50 border-b border-amber-200 space-y-2">
+        <input type="file" id="excel-file-input" accept=".csv, .xlsx, .xls" class="hidden" onchange="uploadExcel(event)">
+        <div class="flex space-x-2">
+          <button onclick="document.getElementById('excel-file-input').click()" class="flex-1 bg-zolimar-dark text-zolimar-gold text-xs font-bold py-2 rounded-lg flex items-center justify-center space-x-1 shadow hover:bg-zolimar-green transition">
+            <i data-lucide="upload-cloud" class="w-4 h-4"></i>
+            <span>Subir Excel/CSV</span>
+          </button>
+          <button onclick="startUndoProcess()" class="bg-red-100 text-red-700 border border-red-300 text-xs font-bold px-3 py-2 rounded-lg flex items-center space-x-1 hover:bg-red-200 transition">
+            <i data-lucide="rotate-ccw" class="w-4 h-4"></i>
+            <span>Revertir Todo</span>
+          </button>
+        </div>
+      </div>
+
+      <div class="p-2 bg-gray-100 border-b border-gray-200 flex space-x-2">
+        <div class="relative flex-1">
+          <i data-lucide="search" class="w-4 h-4 absolute left-3 top-2.5 text-gray-400"></i>
+          <input id="guests-search-input" type="text" placeholder="Buscar por nombre (ej. Ana, Carlos...)" oninput="onSearchInput(this.value)" 
+                 class="w-full pl-9 pr-3 py-1.5 rounded-full text-xs text-gray-800 focus:outline-none focus:ring-2 focus:ring-zolimar-gold bg-white border">
+        </div>
+        <button onclick="openAddGuestModal()" class="bg-zolimar-green text-white font-bold px-3 py-1.5 rounded-full text-xs flex items-center space-x-1 hover:bg-zolimar-dark transition shadow">
+          <i data-lucide="user-plus" class="w-4 h-4"></i>
+          <span>Nuevo</span>
+        </button>
+      </div>
+
+      <div class="flex-1 overflow-y-auto">
+        <table class="w-full text-left text-xs">
+          <thead class="bg-amber-100 text-amber-900 sticky top-0 font-bold uppercase text-[10px]">
+            <tr>
+              <th class="py-2.5 px-3">Invitado</th>
+              <th class="py-2.5 px-1 text-center">Mesa</th>
+              <th class="py-2.5 px-1 text-center">Silla</th>
+              <th class="py-2.5 px-2 text-center">Estado</th>
+              <th class="py-2.5 px-1 text-center">Acción</th>
+            </tr>
+          </thead>
+          <tbody id="guests-table-body" class="divide-y divide-gray-100"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- NAVEGACIÓN INFERIOR -->
+    <nav class="fixed bottom-0 max-w-md w-full bg-zolimar-dark text-gray-300 flex justify-around py-2 border-t border-zolimar-gold/30 z-40">
+      <button onclick="navigate('dashboard')" id="nav-btn-dashboard" class="flex flex-col items-center text-zolimar-gold text-[10px]">
+        <i data-lucide="gauge" class="w-5 h-5 mb-0.5"></i><span>Dashboard</span>
+      </button>
+      <button onclick="navigate('guests')" id="nav-btn-guests" class="flex flex-col items-center hover:text-zolimar-gold text-[10px]">
+        <i data-lucide="users" class="w-5 h-5 mb-0.5"></i><span>Invitados</span>
+      </button>
+      <button onclick="openTableDetail(selectedTableId)" id="nav-btn-tables" class="flex flex-col items-center hover:text-zolimar-gold text-[10px]">
+        <i data-lucide="armchair" class="w-5 h-5 mb-0.5"></i><span>Mesas</span>
+      </button>
+    </nav>
+
+  </div>
+
+  <script>
+    const socket = io();
+    let authToken = localStorage.getItem('token');
+    let currentUser = null;
+    let eventData = { tables: [], guests: [] };
+    let selectedTableId = 1;
+    let currentSearchTerm = '';
+    let selectedGuestForModal = null;
+    let gsmCurrentStatus = 'Pending';
+    let attCurrentFilter = 'all';
+    let fdCurrentFilter = 'all';
+
+    socket.on('refresh-data', () => fetchEventData());
+
+    window.addEventListener('DOMContentLoaded', () => {
+      populateTableAndSeatSelects();
+      if (authToken) {
+        checkSavedSession();
+      } else {
+        showLoginModal();
+      }
+    });
+
+    function showToast(message) {
+      const toast = document.getElementById('toast');
+      const msgElem = document.getElementById('toast-msg');
+      msgElem.innerText = message;
+      toast.classList.remove('opacity-0', 'pointer-events-none');
+      toast.classList.add('opacity-100');
+      setTimeout(() => {
+        toast.classList.remove('opacity-100');
+        toast.classList.add('opacity-0', 'pointer-events-none');
+      }, 2500);
+    }
+
+    function populateTableAndSeatSelects() {
+      const tableSelect = document.getElementById('ag-table');
+      const seatSelect = document.getElementById('ag-seat');
+      if (tableSelect) {
+        tableSelect.innerHTML = '';
+        for (let i = 1; i <= 20; i++) {
+          tableSelect.innerHTML += `<option value="${i}">Mesa ${i}</option>`;
+        }
+      }
+      if (seatSelect) {
+        seatSelect.innerHTML = '';
+        for (let i = 1; i <= 10; i++) {
+          seatSelect.innerHTML += `<option value="${i}">Silla ${i}</option>`;
+        }
+      }
+    }
+
+    function normalizeStr(str) {
+      if (!str) return '';
+      return String(str)
+        .toLowerCase()
+        .normalize('NFD')
+        .replace(/[\u0300-\u036f]/g, '');
+    }
+
+    function onSearchInput(val) {
+      currentSearchTerm = val || '';
+      const s1 = document.getElementById('search-input');
+      const s2 = document.getElementById('guests-search-input');
+      if (s1 && s1.value !== currentSearchTerm) s1.value = currentSearchTerm;
+      if (s2 && s2.value !== currentSearchTerm) s2.value = currentSearchTerm;
+
+      renderDashboard();
+      renderGuestsTable();
+    }
+
+    /* INFORME 1: ASISTENCIA DE INVITADOS CON BUSCADOR */
+    function openAttendanceReportModal() {
+      attCurrentFilter = 'all';
+      const input = document.getElementById('att-search-input');
+      if (input) input.value = '';
+      renderAttendanceReport();
+      document.getElementById('attendance-report-modal').classList.remove('hidden');
+      lucide.createIcons();
+    }
+
+    function closeAttendanceReportModal() {
+      document.getElementById('attendance-report-modal').classList.add('hidden');
+    }
+
+    function filterAttReport(filter) {
+      attCurrentFilter = filter;
+      document.getElementById('att-filter-all').className = filter === 'all' ? 'px-2.5 py-1 rounded-lg text-[10px] font-bold bg-zolimar-dark text-zolimar-gold' : 'px-2.5 py-1 rounded-lg text-[10px] font-bold bg-white text-gray-600 border';
+      document.getElementById('att-filter-entered').className = filter === 'entered' ? 'px-2.5 py-1 rounded-lg text-[10px] font-bold bg-emerald-600 text-white' : 'px-2.5 py-1 rounded-lg text-[10px] font-bold bg-white text-gray-600 border';
+      document.getElementById('att-filter-pending').className = filter === 'pending' ? 'px-2.5 py-1 rounded-lg text-[10px] font-bold bg-red-600 text-white' : 'px-2.5 py-1 rounded-lg text-[10px] font-bold bg-white text-gray-600 border';
+      renderAttendanceReport();
+    }
+
+    function renderAttendanceReport() {
+      const total = eventData.guests.length;
+      const entered = eventData.guests.filter(g => g.status === 'In Progress' || g.status === 'Checked In' || g.status === 'Served').length;
+      const pending = total - entered;
+      const percent = total > 0 ? Math.round((entered / total) * 100) : 0;
+
+      document.getElementById('rep-att-total').innerText = total;
+      document.getElementById('rep-att-entered').innerText = entered;
+      document.getElementById('rep-att-pending').innerText = pending;
+      document.getElementById('rep-att-percent').innerText = `${percent}%`;
+      document.getElementById('rep-att-bar').style.width = `${percent}%`;
+
+      const searchVal = normalizeStr(document.getElementById('att-search-input')?.value || '');
+
+      const container = document.getElementById('rep-att-list');
+      container.innerHTML = '';
+
+      const filtered = eventData.guests.filter(g => {
+        // 1. Filtro por categoría
+        if (attCurrentFilter === 'entered' && !(g.status === 'In Progress' || g.status === 'Checked In' || g.status === 'Served')) return false;
+        if (attCurrentFilter === 'pending' && (g.status === 'In Progress' || g.status === 'Checked In' || g.status === 'Served')) return false;
+
+        // 2. Filtro por texto de búsqueda en el informe
+        if (!searchVal) return true;
+        const nameNorm = normalizeStr(g.name);
+        const tableStr = `mesa ${g.table_id}`.toLowerCase();
+        const tStr = `t-${g.table_id}`.toLowerCase();
+        return nameNorm.includes(searchVal) || tableStr.includes(searchVal) || tStr.includes(searchVal);
+      });
+
+      if (filtered.length === 0) {
+        container.innerHTML = `<div class="text-center py-6 text-gray-400 text-xs">No se encontraron registros en la búsqueda</div>`;
+        return;
+      }
+
+      filtered.forEach(g => {
+        const hasEntered = g.status === 'In Progress' || g.status === 'Checked In' || g.status === 'Served';
+        const item = document.createElement('div');
+        item.className = `p-2 rounded-xl border flex items-center justify-between text-xs ${hasEntered ? 'bg-emerald-50/80 border-emerald-200' : 'bg-red-50/80 border-red-200'}`;
+        item.innerHTML = `
+          <div>
+            <div class="font-bold ${hasEntered ? 'text-emerald-950' : 'text-red-950'}">${escapeHtml(g.name)}</div>
+            <div class="text-[9px] text-gray-500">Mesa ${g.table_id} - Silla ${g.seat}</div>
+          </div>
+          <span class="px-2 py-0.5 rounded-full text-[9px] font-bold ${hasEntered ? 'bg-emerald-600 text-white' : 'bg-red-600 text-white'}">
+            ${hasEntered ? 'Ingresó' : 'No llegó'}
+          </span>
+        `;
+        container.appendChild(item);
+      });
+      lucide.createIcons();
+    }
+
+    /* INFORME 2: COMIDA Y BEBIDAS POR INVITADO CON BUSCADOR */
+    function openFoodDrinkReportModal() {
+      fdCurrentFilter = 'all';
+      const input = document.getElementById('fd-search-input');
+      if (input) input.value = '';
+      renderFoodDrinkReport();
+      document.getElementById('food-drink-report-modal').classList.remove('hidden');
+      lucide.createIcons();
+    }
+
+    function closeFoodDrinkReportModal() {
+      document.getElementById('food-drink-report-modal').classList.add('hidden');
+    }
+
+    function filterFdReport(filter) {
+      fdCurrentFilter = filter;
+      document.getElementById('fd-filter-all').className = filter === 'all' ? 'px-2.5 py-1 rounded-lg text-[10px] font-bold bg-zolimar-dark text-zolimar-gold' : 'px-2.5 py-1 rounded-lg text-[10px] font-bold bg-white text-gray-600 border';
+      document.getElementById('fd-filter-food').className = filter === 'food' ? 'px-2.5 py-1 rounded-lg text-[10px] font-bold bg-emerald-600 text-white' : 'px-2.5 py-1 rounded-lg text-[10px] font-bold bg-white text-gray-600 border';
+      document.getElementById('fd-filter-drink').className = filter === 'drink' ? 'px-2.5 py-1 rounded-lg text-[10px] font-bold bg-blue-600 text-white' : 'px-2.5 py-1 rounded-lg text-[10px] font-bold bg-white text-gray-600 border';
+      document.getElementById('fd-filter-complete').className = filter === 'complete' ? 'px-2.5 py-1 rounded-lg text-[10px] font-bold bg-gray-700 text-white' : 'px-2.5 py-1 rounded-lg text-[10px] font-bold bg-white text-gray-600 border';
+      renderFoodDrinkReport();
+    }
+
+    function renderFoodDrinkReport() {
+      const foodCount = eventData.guests.filter(g => g.food_served === 1).length;
+      const drinkCount = eventData.guests.filter(g => g.drink_served === 1).length;
+      const completeCount = eventData.guests.filter(g => g.food_served === 1 && g.drink_served === 1).length;
+
+      document.getElementById('rep-fd-food').innerText = foodCount;
+      document.getElementById('rep-fd-drink').innerText = drinkCount;
+      document.getElementById('rep-fd-complete').innerText = completeCount;
+
+      const searchVal = normalizeStr(document.getElementById('fd-search-input')?.value || '');
+
+      const container = document.getElementById('rep-fd-list');
+      container.innerHTML = '';
+
+      const filtered = eventData.guests.filter(g => {
+        // 1. Filtro por categoría
+        if (fdCurrentFilter === 'food' && g.food_served !== 1) return false;
+        if (fdCurrentFilter === 'drink' && g.drink_served !== 1) return false;
+        if (fdCurrentFilter === 'complete' && !(g.food_served === 1 && g.drink_served === 1)) return false;
+
+        // 2. Filtro por texto de búsqueda en el informe
+        if (!searchVal) return true;
+        const nameNorm = normalizeStr(g.name);
+        const dietNorm = normalizeStr(g.dietary);
+        const tableStr = `mesa ${g.table_id}`.toLowerCase();
+        const tStr = `t-${g.table_id}`.toLowerCase();
+        return nameNorm.includes(searchVal) || dietNorm.includes(searchVal) || tableStr.includes(searchVal) || tStr.includes(searchVal);
+      });
+
+      if (filtered.length === 0) {
+        container.innerHTML = `<div class="text-center py-6 text-gray-400 text-xs">No se encontraron registros en la búsqueda</div>`;
+        return;
+      }
+
+      filtered.forEach(g => {
+        const isComplete = g.food_served === 1 && g.drink_served === 1;
+        const item = document.createElement('div');
+        item.className = `p-2.5 rounded-xl border flex items-center justify-between text-xs ${isComplete ? 'bg-gray-100 border-gray-400' : 'bg-white border-gray-200'}`;
+        
+        let badges = '';
+        badges += g.food_served ? '<span class="bg-emerald-100 text-emerald-800 font-bold px-1.5 py-0.5 rounded text-[9px]">🍲 Comida</span> ' : '<span class="bg-red-50 text-red-500 font-medium px-1.5 py-0.5 rounded text-[9px]">Sin Comida</span> ';
+        badges += g.drink_served ? '<span class="bg-blue-100 text-blue-800 font-bold px-1.5 py-0.5 rounded text-[9px]">🥤 Bebida</span>' : '<span class="bg-red-50 text-red-500 font-medium px-1.5 py-0.5 rounded text-[9px]">Sin Bebida</span>';
+
+        item.innerHTML = `
+          <div>
+            <div class="font-bold text-gray-900">${escapeHtml(g.name)}</div>
+            <div class="text-[9px] text-gray-500">Mesa ${g.table_id} - Silla ${g.seat} (${escapeHtml(g.dietary || 'Standard')})</div>
+          </div>
+          <div class="flex flex-col items-end space-y-1">
+            <div>${badges}</div>
+            <span class="text-[8px] font-bold uppercase ${isComplete ? 'text-gray-600' : 'text-amber-600'}">
+              ${isComplete ? '🔘 Completo (Plomo)' : 'En proceso'}
+            </span>
+          </div>
+        `;
+        container.appendChild(item);
+      });
+      lucide.createIcons();
+    }
+
+    function printReport(containerId) {
+      const content = document.getElementById(containerId).innerHTML;
+      const win = window.open('', '', 'width=600,height=700');
+      win.document.write(`
+        <html>
+          <head>
+            <title>Informe Zolimar Catering</title>
+            <script src="https://cdn.tailwindcss.com"><\/script>
+          </head>
+          <body class="p-6 font-sans">
+            <h2 class="text-xl font-bold text-emerald-950 mb-1">Zolimar Catering - Reporte Oficial</h2>
+            <p class="text-xs text-gray-500 mb-4">Fecha: ${new Date().toLocaleString()}</p>
+            <div class="space-y-2">${content}</div>
+          </body>
+        </html>
+      `);
+      win.document.close();
+      setTimeout(() => win.print(), 500);
+    }
+
+    /* LÓGICA DE 2 PASOS DE SEGURIDAD PARA REVERSIÓN ADMIN */
+    function startUndoProcess() {
+      document.getElementById('undo-check-1').checked = false;
+      toggleUndoStep1Btn();
+      document.getElementById('undo-step1-modal').classList.remove('hidden');
+    }
+
+    function closeUndoModals() {
+      document.getElementById('undo-step1-modal').classList.add('hidden');
+      document.getElementById('undo-step2-modal').classList.add('hidden');
+    }
+
+    function toggleUndoStep1Btn() {
+      const check = document.getElementById('undo-check-1').checked;
+      const btn = document.getElementById('undo-btn-step1');
+      if (check) {
+        btn.disabled = false;
+        btn.classList.remove('opacity-50', 'cursor-not-allowed');
+      } else {
+        btn.disabled = true;
+        btn.classList.add('opacity-50', 'cursor-not-allowed');
+      }
+    }
+
+    function goToUndoStep2() {
+      document.getElementById('undo-step1-modal').classList.add('hidden');
+      document.getElementById('undo-confirm-input').value = '';
+      validateUndoStep2Input();
+      document.getElementById('undo-step2-modal').classList.remove('hidden');
+    }
+
+    function validateUndoStep2Input() {
+      const val = document.getElementById('undo-confirm-input').value.trim().toUpperCase();
+      const btn = document.getElementById('undo-btn-step2');
+      if (val === 'REVERTIR') {
+        btn.disabled = false;
+        btn.classList.remove('opacity-50', 'cursor-not-allowed');
+      } else {
+        btn.disabled = true;
+        btn.classList.add('opacity-50', 'cursor-not-allowed');
+      }
+    }
+
+    async function executeUndoLastAction() {
+      closeUndoModals();
+      try {
+        const res = await fetch('/api/admin/undo-last', {
+          method: 'POST',
+          headers: { 'Authorization': `Bearer ${authToken}` }
+        });
+        const data = await res.json();
+        showToast(data.message || data.error);
+        fetchEventData();
+      } catch (err) {
+        alert('Error al revertir acción: ' + err.message);
+      }
+    }
+
+    function openGuestServiceModal(guest, tableId, seatNum) {
+      selectedGuestForModal = guest || { id: null, name: `Invitado Silla ${seatNum}`, table_id: tableId, seat: seatNum, status: 'Pending', food_served: 0, drink_served: 0 };
+      
+      document.getElementById('gsm-guest-name').innerText = selectedGuestForModal.name || `Silla ${seatNum}`;
+      document.getElementById('gsm-seat-badge').innerText = `Silla ${seatNum}`;
+      document.getElementById('gsm-table-info').innerText = `Mesa ${tableId} - Control de Servicio`;
+      
+      document.getElementById('gsm-food-check').checked = !!selectedGuestForModal.food_served;
+      document.getElementById('gsm-drink-check').checked = !!selectedGuestForModal.drink_served;
+
+      setGsmStatusUI(selectedGuestForModal.status || 'Pending');
+      document.getElementById('guest-service-modal').classList.remove('hidden');
+      lucide.createIcons();
+    }
+
+    function closeGuestServiceModal() {
+      document.getElementById('guest-service-modal').classList.add('hidden');
+    }
+
+    function onGsmCheckboxChange() {
+      const food = document.getElementById('gsm-food-check').checked;
+      const drink = document.getElementById('gsm-drink-check').checked;
+
+      if (food && drink) {
+        setGsmStatusUI('Served');
+      } else if (food || drink) {
+        setGsmStatusUI('In Progress');
+      }
+    }
+
+    function setGsmStatus(status) {
+      setGsmStatusUI(status);
+      if (status === 'Served') {
+        document.getElementById('gsm-food-check').checked = true;
+        document.getElementById('gsm-drink-check').checked = true;
+      } else if (status === 'Pending') {
+        document.getElementById('gsm-food-check').checked = false;
+        document.getElementById('gsm-drink-check').checked = false;
+      }
+    }
+
+    function setGsmStatusUI(status) {
+      gsmCurrentStatus = status;
+      const p = document.getElementById('gsm-btn-pending');
+      const pr = document.getElementById('gsm-btn-progress');
+      const s = document.getElementById('gsm-btn-served');
+
+      p.className = "py-2 text-[10px] font-bold rounded-lg border transition text-gray-500 bg-white border-gray-200";
+      pr.className = "py-2 text-[10px] font-bold rounded-lg border transition text-gray-500 bg-white border-gray-200";
+      s.className = "py-2 text-[10px] font-bold rounded-lg border transition text-gray-500 bg-white border-gray-200";
+
+      if (status === 'Pending') {
+        p.className = "py-2 text-[10px] font-bold rounded-lg border transition bg-red-500 text-white border-red-600 shadow";
+      } else if (status === 'In Progress' || status === 'Checked In') {
+        pr.className = "py-2 text-[10px] font-bold rounded-lg border transition bg-amber-400 text-gray-900 border-amber-500 shadow";
+      } else if (status === 'Served') {
+        s.className = "py-2 text-[10px] font-bold rounded-lg border transition bg-gray-500 text-white border-gray-600 shadow";
+      }
+    }
+
+    async function saveGuestServiceState() {
+      if (!selectedGuestForModal) return;
+      const food_served = document.getElementById('gsm-food-check').checked ? 1 : 0;
+      const drink_served = document.getElementById('gsm-drink-check').checked ? 1 : 0;
+      const status = gsmCurrentStatus;
+
+      if (!selectedGuestForModal.id) {
+        const res = await fetch('/api/guests/create', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${authToken}` },
+          body: JSON.stringify({ 
+            name: selectedGuestForModal.name, 
+            table_id: selectedGuestForModal.table_id, 
+            seat: selectedGuestForModal.seat, 
+            dietary: 'Standard' 
+          })
+        });
+        const data = await res.json();
+        if (data.guestId) {
+          selectedGuestForModal.id = data.guestId;
+        }
+      }
+
+      if (selectedGuestForModal.id) {
+        await fetch('/api/guests/status', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${authToken}` },
+          body: JSON.stringify({ 
+            guestId: selectedGuestForModal.id, 
+            status: status, 
+            food_served: food_served, 
+            drink_served: drink_served 
+          })
+        });
+        showToast(`Servicio guardado para ${selectedGuestForModal.name}`);
+      }
+
+      closeGuestServiceModal();
+      fetchEventData();
+    }
+
+    function openAddGuestModal(prefillName = '') {
+      document.getElementById('ag-name').value = prefillName || currentSearchTerm || '';
+      document.getElementById('ag-error').classList.add('hidden');
+      document.getElementById('add-guest-modal').classList.remove('hidden');
+      lucide.createIcons();
+    }
+
+    function closeAddGuestModal() {
+      document.getElementById('add-guest-modal').classList.add('hidden');
+    }
+
+    async function handleAddGuestSubmit(e) {
+      e.preventDefault();
+      const name = document.getElementById('ag-name').value;
+      const table_id = document.getElementById('ag-table').value;
+      const seat = document.getElementById('ag-seat').value;
+      const dietary = document.getElementById('ag-dietary').value;
+      const errDiv = document.getElementById('ag-error');
+
+      errDiv.classList.add('hidden');
+
+      try {
+        const res = await fetch('/api/guests/create', {
+          method: 'POST',
+          headers: { 
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${authToken}`
+          },
+          body: JSON.stringify({ name, table_id, seat, dietary })
+        });
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.error);
+
+        closeAddGuestModal();
+        showToast(data.message || 'Invitado agregado');
+        fetchEventData();
+      } catch (err) {
+        errDiv.innerText = err.message;
+        errDiv.classList.remove('hidden');
+      }
+    }
+
+    async function deleteGuest(guestId, guestName) {
+      if (!confirm(`¿Eliminar a '${guestName}' de la lista de invitados?`)) return;
+      try {
+        const res = await fetch('/api/guests/delete', {
+          method: 'POST',
+          headers: { 
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${authToken}`
+          },
+          body: JSON.stringify({ guestId })
+        });
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.error);
+        showToast('Invitado eliminado');
+        fetchEventData();
+      } catch (err) {
+        alert(err.message);
+      }
+    }
+
+    async function checkSavedSession() {
+      try {
+        const res = await fetch('/api/auth/me', {
+          headers: { 'Authorization': `Bearer ${authToken}` }
+        });
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.error);
+
+        currentUser = data.user;
+        onLoginSuccess();
+      } catch (err) {
+        localStorage.removeItem('token');
+        authToken = null;
+        currentUser = null;
+        showLoginModal();
+      }
+    }
+
+    function showLoginModal() {
+      document.getElementById('login-modal').classList.remove('hidden');
+      document.getElementById('login-error').classList.add('hidden');
+    }
+
+    function togglePasswordVisibility(inputId, iconId) {
+      const input = document.getElementById(inputId);
+      const icon = document.getElementById(iconId);
+      if (input.type === 'password') {
+        input.type = 'text';
+        icon.setAttribute('data-lucide', 'eye-off');
+      } else {
+        input.type = 'password';
+        icon.setAttribute('data-lucide', 'eye');
+      }
+      lucide.createIcons();
+    }
+
+    async function handleLoginSubmit(e) {
+      e.preventDefault();
+      const email = document.getElementById('login-email').value;
+      const password = document.getElementById('login-pass').value;
+      const errDiv = document.getElementById('login-error');
+      errDiv.classList.add('hidden');
+
+      try {
+        const res = await fetch('/api/login', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ email, password })
+        });
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.error || 'Error al iniciar sesión');
+
+        authToken = data.token;
+        currentUser = data.user;
+        localStorage.setItem('token', authToken);
+        onLoginSuccess();
+      } catch (err) {
+        errDiv.innerText = err.message;
+        errDiv.classList.remove('hidden');
+      }
+    }
+
+    function onLoginSuccess() {
+      document.getElementById('login-modal').classList.add('hidden');
+      document.getElementById('user-badge').innerText = currentUser.role;
+      const nameElem = document.getElementById('user-name');
+      if (nameElem) {
+        nameElem.innerText = currentUser.name;
+        nameElem.classList.remove('hidden');
+      }
+
+      if (currentUser.role === 'ADMIN') {
+        document.getElementById('admin-panel').classList.remove('hidden');
+      } else {
+        document.getElementById('admin-panel').classList.add('hidden');
+      }
+
+      fetchEventData();
+    }
+
+    function logoutUser() {
+      localStorage.removeItem('token');
+      authToken = null;
+      currentUser = null;
+      document.getElementById('user-name').classList.add('hidden');
+      showLoginModal();
+    }
+
+    function openChangePasswordModal() {
+      document.getElementById('cp-current').value = '';
+      document.getElementById('cp-new').value = '';
+      document.getElementById('cp-confirm').value = '';
+      document.getElementById('cp-error').classList.add('hidden');
+      document.getElementById('cp-success').classList.add('hidden');
+      document.getElementById('change-password-modal').classList.remove('hidden');
+      lucide.createIcons();
+    }
+
+    function closeChangePasswordModal() {
+      document.getElementById('change-password-modal').classList.add('hidden');
+    }
+
+    async function handleChangePasswordSubmit(e) {
+      e.preventDefault();
+      const currentPassword = document.getElementById('cp-current').value;
+      const newPassword = document.getElementById('cp-new').value;
+      const confirmPassword = document.getElementById('cp-confirm').value;
+      const errDiv = document.getElementById('cp-error');
+      const succDiv = document.getElementById('cp-success');
+
+      errDiv.classList.add('hidden');
+      succDiv.classList.add('hidden');
+
+      if (newPassword !== confirmPassword) {
+        errDiv.innerText = 'Las nuevas contraseñas no coinciden';
+        errDiv.classList.remove('hidden');
+        return;
+      }
+
+      try {
+        const res = await fetch('/api/auth/change-password', {
+          method: 'POST',
+          headers: { 
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${authToken}`
+          },
+          body: JSON.stringify({ currentPassword, newPassword })
+        });
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.error);
+
+        succDiv.innerText = data.message || 'Contraseña actualizada';
+        succDiv.classList.remove('hidden');
+        setTimeout(() => closeChangePasswordModal(), 1500);
+      } catch (err) {
+        errDiv.innerText = err.message;
+        errDiv.classList.remove('hidden');
+      }
+    }
+
+    async function fetchEventData() {
+      if (!authToken) return;
+      try {
+        const res = await fetch('/api/event-data', {
+          headers: { 'Authorization': `Bearer ${authToken}` }
+        });
+        if (res.status === 401) {
+          logoutUser();
+          return;
+        }
+        eventData = await res.json();
+        renderDashboard();
+        renderGuestsTable();
+        if (!document.getElementById('view-table-detail').classList.contains('hidden')) {
+          openTableDetail(selectedTableId);
+        }
+        if (!document.getElementById('attendance-report-modal').classList.contains('hidden')) {
+          renderAttendanceReport();
+        }
+        if (!document.getElementById('food-drink-report-modal').classList.contains('hidden')) {
+          renderFoodDrinkReport();
+        }
+        lucide.createIcons();
+      } catch (err) {
+        console.error('Error fetching event data:', err);
+      }
+    }
+
+    function renderDashboard() {
+      const grid = document.getElementById('tables-grid');
+      grid.innerHTML = '';
+      const filter = normalizeStr(currentSearchTerm);
+
+      for (let t = 1; t <= 20; t++) {
+        const tableGuests = eventData.guests.filter(g => g.table_id === t);
+        
+        const matches = filter === '' || tableGuests.some(g => {
+          const nameNorm = normalizeStr(g.name);
+          const dietNorm = normalizeStr(g.dietary);
+          const tagNorm = normalizeStr(g.tag);
+          return nameNorm.includes(filter) || dietNorm.includes(filter) || tagNorm.includes(filter);
+        });
+
+        const div = document.createElement('div');
+        div.className = `flex flex-col items-center cursor-pointer transition ${matches ? 'opacity-100 scale-100' : 'opacity-20 scale-95'}`;
+        div.onclick = () => openTableDetail(t);
+
+        let chairs = '';
+        for (let s = 0; s < 10; s++) {
+          const seatNum = String(s + 1);
+          const angle = (s / 10) * (2 * Math.PI) - Math.PI / 2;
+          const x = 32 + 26 * Math.cos(angle) - 4;
+          const y = 32 + 26 * Math.sin(angle) - 4;
+          const guest = tableGuests.find(g => String(g.seat) === seatNum);
+          
+          let color = 'bg-red-500';
+          if (guest?.status === 'In Progress' || guest?.status === 'Checked In') color = 'bg-yellow-400';
+          if (guest?.status === 'Served' || (guest?.food_served === 1 && guest?.drink_served === 1)) color = 'bg-gray-400';
+
+          chairs += `<div style="left:${x}px; top:${y}px;" class="absolute w-2.5 h-2.5 rounded-full ${color} border border-white"></div>`;
+        }
+
+        div.innerHTML = `
+          <div class="relative w-16 h-16 flex items-center justify-center">
+            ${chairs}
+            <div class="w-8 h-8 rounded-full bg-amber-200 border-2 border-amber-600 font-bold text-xs flex items-center justify-center shadow z-10">${t}</div>
+          </div>
+          <span class="text-[10px] font-semibold text-gray-600 mt-1">Mesa ${t}</span>
+        `;
+        grid.appendChild(div);
+      }
+      lucide.createIcons();
+    }
+
+    function openTableDetail(tableId) {
+      selectedTableId = tableId;
+      document.getElementById('detail-table-title').innerText = `Mesa ${tableId} - Vista Detallada`;
+      document.getElementById('detail-center-table-num').innerText = `Mesa ${tableId}`;
+
+      const container = document.getElementById('detail-chairs-container');
+      container.innerHTML = '';
+
+      const table = eventData.tables.find(t => t.id === tableId) || { 
+        service_status: 'Pending', 
+        food_service: 1, 
+        drink_service: 0,
+        food_type: 'Menú Estándar',
+        drink_type: 'Agua & Gaseosa'
+      };
+      
+      updateStatusUI(table.service_status);
+      document.getElementById('food-toggle').checked = !!table.food_service;
+      document.getElementById('drink-toggle').checked = !!table.drink_service;
+      document.getElementById('food-type-input').value = table.food_type || 'Menú Estándar';
+      document.getElementById('drink-type-input').value = table.drink_type || 'Agua & Gaseosa';
+
+      const guests = eventData.guests.filter(g => g.table_id === tableId);
+
+      for (let i = 0; i < 10; i++) {
+        const seatNum = String(i + 1);
+        const angle = (i / 10) * (2 * Math.PI) - Math.PI / 2;
+        const x = 144 + 105 * Math.cos(angle) - 24;
+        const y = 144 + 105 * Math.sin(angle) - 24;
+        
+        const guest = guests.find(g => String(g.seat) === seatNum) || { id: null, name: `Silla ${seatNum}`, table_id: tableId, seat: seatNum, tag: 'Libre', status: 'Pending', food_served: 0, drink_served: 0 };
+
+        let color = 'bg-red-500 border-red-700 text-white';
+        let statusTag = 'Pendiente';
+
+        if (guest.status === 'In Progress' || guest.status === 'Checked In') {
+          color = 'bg-yellow-400 border-yellow-600 text-gray-900';
+          statusTag = 'En Proceso';
+        }
+        if (guest.status === 'Served' || (guest.food_served === 1 && guest.drink_served === 1)) {
+          color = 'bg-gray-400 border-gray-600 text-white';
+          statusTag = 'Servido (Plomo)';
+        }
+
+        let foodBadge = guest.food_served ? '🍲' : '';
+        let drinkBadge = guest.drink_served ? '🥤' : '';
+
+        const chair = document.createElement('div');
+        chair.style.left = `${x}px`;
+        chair.style.top = `${y}px`;
+        chair.className = `absolute w-12 h-12 rounded-xl ${color} border-2 shadow flex flex-col items-center justify-center p-1 text-center cursor-pointer transition transform hover:scale-110 z-20`;
+        
+        chair.onclick = () => openGuestServiceModal(guest, tableId, seatNum);
+
+        chair.innerHTML = `
+          <span class="text-[8px] font-bold truncate w-full">${guest.name}</span>
+          <span class="text-[6px] uppercase font-semibold leading-tight">${foodBadge}${drinkBadge} ${statusTag}</span>
+        `;
+        container.appendChild(chair);
+      }
+
+      navigate('table-detail');
+    }
+
+    function setFoodType(type) {
+      document.getElementById('food-type-input').value = type;
+      updateTableTypes();
+    }
+
+    function setDrinkType(type) {
+      document.getElementById('drink-type-input').value = type;
+      updateTableTypes();
+    }
+
+    async function updateTableTypes() {
+      const foodType = document.getElementById('food-type-input').value;
+      const drinkType = document.getElementById('drink-type-input').value;
+      await fetch('/api/tables/status', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${authToken}` },
+        body: JSON.stringify({ tableId: selectedTableId, foodType, drinkType })
+      });
+      showToast(`Menú guardado: Comida '${foodType}', Bebida '${drinkType}'`);
+    }
+
+    async function toggleGuestStatus(guest) {
+      if (!guest || !guest.id) return;
+      const nextStatus = guest.status === 'Pending' ? 'In Progress' : (guest.status === 'In Progress' || guest.status === 'Checked In' ? 'Served' : 'Pending');
+      await fetch('/api/guests/status', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${authToken}` },
+        body: JSON.stringify({ guestId: guest.id, status: nextStatus })
+      });
+    }
+
+    async function toggleGuestStatusById(guestId) {
+      const guest = eventData.guests.find(g => g.id === guestId);
+      if (guest) toggleGuestStatus(guest);
+    }
+
+    async function updateTableService(status) {
+      await fetch('/api/tables/status', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${authToken}` },
+        body: JSON.stringify({ tableId: selectedTableId, serviceStatus: status })
+      });
+      updateStatusUI(status);
+      showToast(`Estado de Mesa ${selectedTableId} cambiado a: ${status}`);
+    }
+
+    async function updateTableToggles() {
+      const foodService = document.getElementById('food-toggle').checked;
+      const drinkService = document.getElementById('drink-toggle').checked;
+      await fetch('/api/tables/status', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${authToken}` },
+        body: JSON.stringify({ tableId: selectedTableId, foodService, drinkService })
+      });
+      showToast('Servicios de mesa actualizados');
+    }
+
+    function renderGuestsTable() {
+      const tbody = document.getElementById('guests-table-body');
+      tbody.innerHTML = '';
+      
+      const filter = normalizeStr(currentSearchTerm);
+
+      const filteredGuests = eventData.guests.filter(g => {
+        if (!filter) return true;
+        const nameNorm = normalizeStr(g.name);
+        const dietNorm = normalizeStr(g.dietary);
+        const tagNorm = normalizeStr(g.tag);
+        const tableStr = `t-${g.table_id}`.toLowerCase();
+        const tableNumStr = `mesa ${g.table_id}`.toLowerCase();
+        
+        return nameNorm.includes(filter) || 
+               dietNorm.includes(filter) || 
+               tagNorm.includes(filter) || 
+               tableStr.includes(filter) || 
+               tableNumStr.includes(filter);
+      });
+
+      if (filteredGuests.length === 0) {
+        tbody.innerHTML = `
+          <tr>
+            <td colspan="5" class="text-center py-8 px-4 text-gray-500">
+              <i data-lucide="user-x" class="w-8 h-8 text-gray-300 mx-auto mb-2"></i>
+              <p class="text-xs font-medium">No se encontró ningún invitado con "${escapeHtml(currentSearchTerm)}"</p>
+              <button onclick="openAddGuestModal('${escapeHtml(currentSearchTerm)}')" 
+                      class="mt-3 inline-flex items-center space-x-1 bg-zolimar-green text-zolimar-gold font-bold px-3 py-1.5 rounded-lg text-xs hover:bg-zolimar-dark transition shadow">
+                <i data-lucide="user-plus" class="w-4 h-4"></i>
+                <span>+ Agregar "${escapeHtml(currentSearchTerm)}"</span>
+              </button>
+            </td>
+          </tr>
+        `;
+        lucide.createIcons();
+        return;
+      }
+
+      filteredGuests.forEach(g => {
+        const tr = document.createElement('tr');
+        tr.className = 'hover:bg-gray-50 transition cursor-pointer';
+        
+        let statusBadgeClass = 'bg-red-100 text-red-800';
+        let statusText = '🔴 Pendiente';
+
+        if (g.status === 'In Progress' || g.status === 'Checked In') {
+          statusBadgeClass = 'bg-amber-100 text-amber-900 border border-amber-300';
+          statusText = '🟡 En Proceso';
+        }
+        if (g.status === 'Served' || (g.food_served === 1 && g.drink_served === 1)) {
+          statusBadgeClass = 'bg-gray-200 text-gray-800 border border-gray-400';
+          statusText = '🔘 Servido (Plomo)';
+        }
+
+        let badgesHtml = '';
+        if (g.food_served) badgesHtml += '<span class="ml-1" title="Comida Servida">🍲</span>';
+        if (g.drink_served) badgesHtml += '<span class="ml-1" title="Bebida Servida">🥤</span>';
+
+        tr.innerHTML = `
+          <td class="py-2 px-3 font-semibold" onclick="openGuestServiceModal(${JSON.stringify(g).replace(/"/g, '&quot;')}, ${g.table_id}, '${g.seat}')">
+            ${escapeHtml(g.name)} ${badgesHtml}
+            <div class="text-[9px] text-gray-400">${escapeHtml(g.dietary || 'Standard')}</div>
+          </td>
+          <td class="text-center font-bold">T-${g.table_id}</td>
+          <td class="text-center font-semibold">S-${g.seat}</td>
+          <td class="text-center">
+            <button onclick="toggleGuestStatusById(${g.id})" class="px-2 py-0.5 rounded-full text-[10px] font-bold ${statusBadgeClass} hover:opacity-80 transition">
+              ${statusText}
+            </button>
+          </td>
+          <td class="text-center">
+            <button onclick="deleteGuest(${g.id}, '${escapeHtml(g.name)}')" title="Eliminar invitado" class="text-red-400 hover:text-red-600 p-1">
+              <i data-lucide="trash-2" class="w-3.5 h-3.5"></i>
+            </button>
+          </td>
+        `;
+        tbody.appendChild(tr);
+      });
+      lucide.createIcons();
+    }
+
+    function escapeHtml(text) {
+      if (!text) return '';
+      return String(text).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#039;");
+    }
+
+    async function uploadExcel(event) {
+      const file = event.target.files[0];
+      if (!file) return;
+      const formData = new FormData();
+      formData.append('file', file);
+
+      try {
+        const res = await fetch('/api/guests/upload', {
+          method: 'POST',
+          headers: { 'Authorization': `Bearer ${authToken}` },
+          body: formData
+        });
+        const data = await res.json();
+        showToast(data.message || data.error);
+        fetchEventData();
+      } catch (err) {
+        alert('Error al subir el archivo: ' + err.message);
+      } finally {
+        event.target.value = '';
+      }
+    }
+
+    function updateStatusUI(status) {
+      const p = document.getElementById('btn-status-pending');
+      const pr = document.getElementById('btn-status-progress');
+      const s = document.getElementById('btn-status-served');
+      
+      p.className = "py-2 text-xs font-bold rounded-lg transition shadow-sm bg-white text-gray-500 border border-gray-200";
+      pr.className = "py-2 text-xs font-bold rounded-lg transition shadow-sm bg-white text-gray-500 border border-gray-200";
+      s.className = "py-2 text-xs font-bold rounded-lg transition shadow-sm bg-white text-gray-500 border border-gray-200";
+
+      if (status === 'Pending') {
+        p.className = "py-2 text-xs font-bold rounded-lg transition shadow-md bg-red-600 text-white border border-red-700";
+      } else if (status === 'In Progress') {
+        pr.className = "py-2 text-xs font-bold rounded-lg transition shadow-md bg-amber-500 text-white border border-amber-600";
+      } else if (status === 'Served') {
+        s.className = "py-2 text-xs font-bold rounded-lg transition shadow-md bg-emerald-600 text-white border border-emerald-700";
+      }
+    }
+
+    function navigate(view) {
+      document.getElementById('view-dashboard').classList.add('hidden');
+      document.getElementById('view-table-detail').classList.add('hidden');
+      document.getElementById('view-guests').classList.add('hidden');
+      document.getElementById(`view-${view}`).classList.remove('hidden');
+
+      const btnDash = document.getElementById('nav-btn-dashboard');
+      const btnGuests = document.getElementById('nav-btn-guests');
+      const btnTables = document.getElementById('nav-btn-tables');
+
+      btnDash.className = btnGuests.className = btnTables.className = "flex flex-col items-center hover:text-zolimar-gold text-[10px] text-gray-300";
+
+      if (view === 'dashboard') btnDash.className = "flex flex-col items-center text-zolimar-gold text-[10px]";
+      if (view === 'guests') btnGuests.className = "flex flex-col items-center text-zolimar-gold text-[10px]";
+      if (view === 'table-detail') btnTables.className = "flex flex-col items-center text-zolimar-gold text-[10px]";
+
+      lucide.createIcons();
+    }
+  </script>
+</body>
+</html>
