@@ -37,11 +37,27 @@ const db = new sqlite3.Database(dbPath);
 app.use(cors());
 app.use(express.json());
 
+// Desactivar caché estática para que siempre se reciba la versión más reciente en vivo
+app.use((req, res, next) => {
+  res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate');
+  res.setHeader('Pragma', 'no-cache');
+  res.setHeader('Expires', '0');
+  res.setHeader('Surrogate-Control', 'no-store');
+  next();
+});
+
 // Servir la carpeta public como estática
-app.use(express.static(path.join(__dirname, 'public')));
+app.use(express.static(path.join(__dirname, 'public'), {
+  etag: false,
+  lastModified: false,
+  setHeaders: (res) => {
+    res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate');
+  }
+}));
 
 // Ruta Principal
 app.get('/', (req, res) => {
+  res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate');
   res.sendFile(path.join(__dirname, 'public', 'index.html'));
 });
 
@@ -350,13 +366,8 @@ app.post('/api/admin/tables/remove', auth, (req, res) => {
     if (err || !targetId) return res.status(400).json({ error: 'No se encontró una mesa para eliminar.' });
     if (targetId <= 1) return res.status(400).json({ error: 'Debe existir al menos 1 mesa en el evento.' });
 
-    db.get(`SELECT COUNT(*) as count FROM guests WHERE table_id = ?`, [targetId], (countErr, countRow) => {
-      if (countRow && countRow.count > 0) {
-        return res.status(400).json({
-          error: `No se puede eliminar la Mesa ${targetId} porque tiene ${countRow.count} comensal(es) asignado(s). Reasigna o borra los comensales primero.`
-        });
-      }
-
+    // Eliminar comensales asignados a esta mesa y luego eliminar la mesa
+    db.run(`DELETE FROM guests WHERE table_id = ?`, [targetId], (guestErr) => {
       db.run(`DELETE FROM tables WHERE id = ?`, [targetId], (delErr) => {
         if (delErr) return res.status(500).json({ error: 'Error al eliminar mesa: ' + delErr.message });
         io.emit('refresh-data');
@@ -393,19 +404,12 @@ app.post('/api/admin/tables/set-count', auth, (req, res) => {
         res.json({ success: true, message: `Se aumentaron las mesas a un total de ${targetCount}.` });
       });
     } else {
-      // Quitar mesas sobrantes verificando comensales
-      db.all(`SELECT DISTINCT table_id FROM guests WHERE table_id > ?`, [targetCount], (guestErr, guestRows) => {
-        if (guestRows && guestRows.length > 0) {
-          const occupied = guestRows.map(r => r.table_id).join(', ');
-          return res.status(400).json({
-            error: `No se pueden reducir las mesas a ${targetCount} porque las mesas (${occupied}) tienen comensales asignados.`
-          });
-        }
-
+      // Quitar mesas sobrantes y limpiar comensales de las mesas removidas
+      db.run(`DELETE FROM guests WHERE table_id > ?`, [targetCount], (guestErr) => {
         db.run(`DELETE FROM tables WHERE id > ?`, [targetCount], (delErr) => {
           if (delErr) return res.status(500).json({ error: delErr.message });
           io.emit('refresh-data');
-          res.json({ success: true, message: `Se redujeron las mesas a un total de ${targetCount}.` });
+          res.json({ success: true, message: `Se ajustaron las mesas a un total de ${targetCount}.` });
         });
       });
     }

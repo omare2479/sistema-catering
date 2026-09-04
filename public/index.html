@@ -47,7 +47,7 @@
 
   <!-- NOTIFICACIÓN TOAST FLOTANTE -->
   <div id="toast" class="fixed top-4 left-1/2 -translate-x-1/2 z-50 bg-zolimar-royalDark text-white text-xs font-bold px-4 py-2.5 rounded-xl shadow-2xl transition-all duration-300 opacity-0 pointer-events-none flex items-center space-x-2 border border-zolimar-gold">
-    <i data-lucide="check-circle" class="w-4 h-4 text-emerald-400"></i>
+    <i data-lucide="check-circle" class="w-4 h-4 text-zolimar-gold"></i>
     <span id="toast-msg">Acción realizada con éxito</span>
   </div>
 
@@ -116,7 +116,7 @@
             <input id="cp-confirm" type="password" required minlength="4" class="w-full text-xs p-2 border rounded-lg focus:ring-2 focus:ring-zolimar-blueBright outline-none">
           </div>
           <div id="cp-error" class="text-[11px] text-red-600 font-semibold hidden"></div>
-          <div id="cp-success" class="text-[11px] text-emerald-600 font-semibold hidden"></div>
+          <div id="cp-success" class="text-[11px] text-zolimar-royalBlue font-semibold hidden"></div>
           
           <button type="submit" class="w-full bg-zolimar-royalBlue text-zolimar-gold font-bold py-2 rounded-lg text-xs hover:bg-zolimar-royalDark transition shadow">
             Guardar Contraseña
@@ -147,7 +147,7 @@
             <span id="modal-table-count-display" class="text-2xl font-black text-zolimar-royalBlue block">20</span>
             <span class="text-[9px] text-gray-500 font-bold uppercase">Mesas Activas</span>
           </div>
-          <button onclick="addTable()" title="Agregar 1 mesa" class="w-10 h-10 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl font-black text-lg flex items-center justify-center shadow active:scale-95 transition">
+          <button onclick="addTable()" title="Agregar 1 mesa" class="w-10 h-10 bg-zolimar-royalBlue hover:bg-zolimar-royalDark text-white rounded-xl font-black text-lg flex items-center justify-center shadow active:scale-95 transition">
             +
           </button>
         </div>
@@ -207,7 +207,7 @@
               <label class="flex items-start space-x-2 p-2 rounded-lg border border-transparent hover:bg-white cursor-pointer transition">
                 <input type="radio" name="excel-import-mode" value="append" class="mt-0.5 accent-zolimar-royalBlue">
                 <div>
-                  <div class="font-bold text-emerald-800">➕ Agregar a Lista Existente</div>
+                  <div class="font-bold text-zolimar-royalBlue">➕ Agregar a Lista Existente</div>
                   <div class="text-[10px] text-gray-500">Anexa los nuevos comensales respetando a los que ya están registrados.</div>
                 </div>
               </label>
@@ -282,7 +282,7 @@
         <!-- Pestañas (Platos vs Bebidas) -->
         <div class="flex border-b bg-gray-50 text-xs font-bold">
           <button id="catalog-tab-food" onclick="switchCatalogTab('food')" class="flex-1 py-2.5 text-center border-b-2 border-zolimar-royalBlue text-zolimar-royalBlue bg-white flex items-center justify-center space-x-1.5">
-            <i data-lucide="utensils" class="w-4 h-4 text-emerald-700"></i>
+            <i data-lucide="utensils" class="w-4 h-4 text-zolimar-royalBlue"></i>
             <span>🍲 Platos / Menús</span>
           </button>
           <button id="catalog-tab-drink" onclick="switchCatalogTab('drink')" class="flex-1 py-2.5 text-center text-gray-500 hover:text-zolimar-royalBlue flex items-center justify-center space-x-1.5">
@@ -295,7 +295,7 @@
         <div class="p-3 bg-blue-50/70 border-b space-y-2">
           <label id="catalog-input-label" class="text-[10px] font-bold text-zolimar-royalBlue uppercase block">+ Ingresar Plato Manualmente:</label>
           <div class="flex space-x-2">
-            <input id="catalog-new-name-input" type="text" placeholder="Ej. Lomo Saltado Gourmet..." class="flex-1 text-xs p-2.5 border border-blue-300 rounded-xl focus:ring-2 focus:ring-zolimar-blueBright outline-none bg-white font-semibold">
+            <input id="catalog-new-name-input" type="text" placeholder="Ej. Lomo Saltado Gourmet..." onkeydown="if(event.key==='Enter') submitNewCatalogItem()" class="flex-1 text-xs p-2.5 border border-blue-300 rounded-xl focus:ring-2 focus:ring-zolimar-blueBright outline-none bg-white font-semibold">
             <button onclick="submitNewCatalogItem()" class="bg-zolimar-royalBlue hover:bg-zolimar-royalDark text-zolimar-gold font-bold px-3.5 py-2.5 rounded-xl text-xs transition shadow flex items-center space-x-1 active:scale-95">
               <i data-lucide="plus" class="w-4 h-4"></i>
               <span>Agregar</span>
@@ -404,9 +404,9 @@
               <span class="text-[9px] text-gray-500 uppercase font-bold block">Total</span>
               <span id="rep-att-total" class="text-base font-extrabold text-gray-900">0</span>
             </div>
-            <div class="bg-emerald-50 p-2 rounded-xl border border-emerald-200 shadow-sm">
-              <span class="text-[9px] text-emerald-800 uppercase font-bold block">Ingresaron</span>
-              <span id="rep-att-entered" class="text-base font-extrabold text-emerald-700">0</span>
+            <div class="bg-blue-50 p-2 rounded-xl border border-blue-200 shadow-sm">
+              <span class="text-[9px] text-zolimar-royalBlue uppercase font-bold block">Ingresaron</span>
+              <span id="rep-att-entered" class="text-base font-extrabold text-zolimar-royalBlue">0</span>
             </div>
             <div class="bg-red-50 p-2 rounded-xl border border-red-200 shadow-sm">
               <span class="text-[9px] text-red-800 uppercase font-bold block">Faltan</span>
@@ -417,10 +417,10 @@
           <div>
             <div class="flex justify-between text-[10px] font-bold text-gray-600 mb-1">
               <span>Porcentaje de Asistencia:</span>
-              <span id="rep-att-percent" class="text-emerald-700">0%</span>
+              <span id="rep-att-percent" class="text-zolimar-royalBlue">0%</span>
             </div>
             <div class="w-full h-2.5 bg-gray-200 rounded-full overflow-hidden">
-              <div id="rep-att-bar" class="h-full bg-emerald-500 transition-all duration-500" style="width: 0%;"></div>
+              <div id="rep-att-bar" class="h-full bg-blue-500 transition-all duration-500" style="width: 0%;"></div>
             </div>
           </div>
 
@@ -468,9 +468,9 @@
 
         <div class="p-3 bg-gray-50 border-b space-y-2">
           <div class="grid grid-cols-3 gap-2 text-center">
-            <div class="bg-emerald-50 p-2 rounded-xl border border-emerald-200 shadow-sm">
-              <span class="text-[9px] text-emerald-800 uppercase font-bold block">🍲 Comida</span>
-              <span id="rep-fd-food" class="text-base font-extrabold text-emerald-700">0</span>
+            <div class="bg-blue-50 p-2 rounded-xl border border-blue-200 shadow-sm">
+              <span class="text-[9px] text-zolimar-royalBlue uppercase font-bold block">🍲 Comida</span>
+              <span id="rep-fd-food" class="text-base font-extrabold text-zolimar-royalBlue">0</span>
             </div>
             <div class="bg-blue-50 p-2 rounded-xl border border-blue-200 shadow-sm">
               <span class="text-[9px] text-blue-800 uppercase font-bold block">🥤 Bebida</span>
@@ -531,10 +531,10 @@
 
           <div class="flex items-center justify-between border-t border-blue-100 pt-2">
             <div class="flex items-center space-x-2">
-              <i data-lucide="utensils" class="w-4 h-4 text-emerald-700"></i>
+              <i data-lucide="utensils" class="w-4 h-4 text-zolimar-royalBlue"></i>
               <span class="text-xs font-bold text-gray-800">Comida Entregada</span>
             </div>
-            <input id="gsm-food-check" type="checkbox" onchange="onGsmCheckboxChange()" class="w-5 h-5 accent-emerald-600 cursor-pointer">
+            <input id="gsm-food-check" type="checkbox" onchange="onGsmCheckboxChange()" class="w-5 h-5 accent-zolimar-royalBlue cursor-pointer">
           </div>
 
           <div class="flex items-center justify-between border-t border-blue-100 pt-2">
@@ -561,7 +561,7 @@
           </div>
         </div>
 
-        <div id="gsm-lock-notice" class="hidden bg-emerald-50 border border-emerald-300 rounded-xl px-3 py-2 text-[11px] text-emerald-800 font-semibold text-center">
+        <div id="gsm-lock-notice" class="hidden bg-blue-50 border border-blue-300 rounded-xl px-3 py-2 text-[11px] text-zolimar-royalBlue font-semibold text-center">
           ✅ Servicio ya confirmado. No se puede modificar por mesero.
         </div>
 
@@ -701,10 +701,10 @@
           <div class="space-y-2 bg-blue-50/40 p-2.5 rounded-xl border border-blue-100">
             <div class="flex items-center justify-between">
               <div class="flex items-center space-x-2">
-                <i data-lucide="utensils" class="w-4 h-4 text-emerald-700"></i>
+                <i data-lucide="utensils" class="w-4 h-4 text-zolimar-royalBlue"></i>
                 <span class="text-xs font-bold text-gray-800">Comida Entregada 🍲</span>
               </div>
-              <input id="oem-food-check" type="checkbox" class="w-5 h-5 accent-emerald-600 cursor-pointer">
+              <input id="oem-food-check" type="checkbox" class="w-5 h-5 accent-zolimar-royalBlue cursor-pointer">
             </div>
 
             <div class="flex items-center justify-between border-t border-blue-100 pt-2">
@@ -776,8 +776,8 @@
           <i data-lucide="utensils" class="w-3.5 h-3.5"></i>
           <span class="truncate">Inf. Entrega</span>
         </button>
-        <button onclick="openMenuCatalogModal()" title="Ingresar o modificar platos y bebidas que se servirán" class="bg-gradient-to-r from-zolimar-gold to-amber-400 text-zolimar-royalDark font-extrabold text-[10px] py-1.5 px-2 rounded-lg flex items-center justify-center space-x-1 shadow-md hover:brightness-110 active:scale-95 transition border border-yellow-200">
-          <i data-lucide="utensils-crossed" class="w-3.5 h-3.5"></i>
+        <button onclick="openMenuCatalogModal()" title="Ingresar manualmente qué comidas y bebidas se servirán" class="bg-zolimar-royalBlue text-zolimar-gold border-2 border-zolimar-gold font-extrabold text-[11px] py-1.5 px-2 rounded-lg flex items-center justify-center space-x-1 shadow-md hover:bg-zolimar-royalDark active:scale-95 transition">
+          <i data-lucide="utensils-crossed" class="w-3.5 h-3.5 text-zolimar-gold"></i>
           <span class="truncate">🍽️ Comidas y Bebidas</span>
         </button>
       </div>
@@ -790,29 +790,33 @@
       <div class="bg-gradient-to-r from-zolimar-royalBlue to-zolimar-royalDark px-4 py-2.5 text-white shadow-md space-y-2">
         
         <!-- PANEL DE CONTROL DINÁMICO DE MESAS (BOTONES PARA AUMENTAR O QUITAR MESAS) -->
-        <div id="admin-table-controls-bar" class="flex flex-wrap items-center justify-between gap-2 bg-black/25 p-2 rounded-xl border border-zolimar-gold/30">
+        <div id="admin-table-controls-bar" class="flex flex-wrap items-center justify-between gap-2.5 bg-black/30 p-2.5 rounded-xl border border-zolimar-gold/40 shadow-inner">
           
-          <!-- CONTROLES DIRECTOS DE AUMENTAR Y QUITAR MESAS -->
-          <div class="flex items-center space-x-1.5 bg-white/10 px-2 py-1 rounded-lg border border-white/20">
-            <span class="text-[10px] font-bold text-zolimar-gold mr-1">Mesas:</span>
-            <button onclick="removeTable()" title="Quitar 1 mesa" class="bg-red-600 hover:bg-red-700 text-white font-black w-6 h-6 rounded-md flex items-center justify-center text-xs shadow active:scale-90 transition">
-              -
+          <!-- BOTONES PARA AUMENTAR O QUITAR MESAS -->
+          <div class="flex items-center space-x-2 bg-white/10 px-2.5 py-1.5 rounded-xl border border-white/20">
+            <span class="text-xs font-black text-zolimar-gold">Mesas:</span>
+            <button onclick="removeTable()" title="Quitar 1 mesa del evento" class="bg-red-600 hover:bg-red-700 text-white font-black px-2.5 py-1 rounded-lg flex items-center space-x-1 text-xs shadow-md active:scale-95 transition">
+              <i data-lucide="minus-circle" class="w-3.5 h-3.5"></i>
+              <span>Quitar Mesa</span>
             </button>
-            <button onclick="openManageTablesModal()" title="Ver o ajustar total de mesas" class="bg-zolimar-gold text-zolimar-royalDark px-2.5 py-0.5 rounded-md font-extrabold text-xs hover:bg-zolimar-goldLight transition">
-              <span id="dash-total-tables-badge">20</span> Mesas ⚙️
+            <button onclick="openManageTablesModal()" title="Ver o ajustar cantidad exacta de mesas" class="bg-zolimar-gold text-zolimar-royalDark px-3 py-1 rounded-lg font-black text-xs hover:bg-zolimar-goldLight transition shadow border border-amber-300 flex items-center space-x-1">
+              <span id="dash-total-tables-badge">20</span>
+              <span>Mesas ⚙️</span>
             </button>
-            <button onclick="addTable()" title="Aumentar 1 mesa" class="bg-emerald-600 hover:bg-emerald-700 text-white font-black w-6 h-6 rounded-md flex items-center justify-center text-xs shadow active:scale-90 transition">
-              +
+            <button onclick="addTable()" title="Aumentar 1 mesa al evento" class="bg-zolimar-royalBlue hover:bg-zolimar-royalDark text-zolimar-gold border-2 border-zolimar-gold font-black px-2.5 py-1 rounded-lg flex items-center space-x-1 text-xs shadow-md active:scale-95 transition">
+              <i data-lucide="plus-circle" class="w-3.5 h-3.5 text-zolimar-gold"></i>
+              <span>Aumentar Mesa</span>
             </button>
           </div>
 
-          <div class="flex items-center space-x-1.5">
-            <span class="text-[10px] text-blue-200 font-bold hidden sm:inline">👥 <span id="dash-total-guests-badge">0</span> Comensales</span>
-            <button onclick="openMenuCatalogModal()" title="Ingresar qué se servirá" class="bg-zolimar-gold hover:bg-zolimar-goldLight text-zolimar-royalDark font-extrabold px-2.5 py-1 rounded-lg text-[10px] flex items-center space-x-1 transition shadow active:scale-95">
-              <i data-lucide="utensils-crossed" class="w-3.5 h-3.5"></i>
-              <span>Comidas & Bebidas</span>
+          <!-- BOTÓN DESTACADO: COMIDAS Y BEBIDAS -->
+          <div class="flex items-center space-x-2">
+            <span class="text-xs text-blue-200 font-bold hidden md:inline">👥 <span id="dash-total-guests-badge">0</span> Comensales</span>
+            <button onclick="openMenuCatalogModal()" title="Ingresar manualmente qué comidas y bebidas se servirán" class="bg-zolimar-royalBlue text-zolimar-gold border-2 border-zolimar-gold hover:bg-zolimar-royalDark font-black px-3.5 py-1.5 rounded-xl text-xs flex items-center space-x-1.5 transition shadow-lg active:scale-95">
+              <i data-lucide="utensils-crossed" class="w-4 h-4 text-zolimar-gold"></i>
+              <span>🍽️ Comidas y Bebidas</span>
             </button>
-            <button onclick="openUploadExcelModal()" title="Cargar archivo Excel de invitados" class="bg-blue-600 hover:bg-blue-700 text-white font-bold px-2.5 py-1 rounded-lg text-[10px] flex items-center space-x-1 transition shadow">
+            <button onclick="openUploadExcelModal()" title="Cargar archivo Excel de invitados" class="bg-blue-600 hover:bg-blue-700 text-white font-bold px-3 py-1.5 rounded-xl text-xs flex items-center space-x-1 transition shadow">
               <i data-lucide="file-spreadsheet" class="w-3.5 h-3.5"></i>
               <span>Excel</span>
             </button>
@@ -848,27 +852,40 @@
 
     <!-- 2. DETALLE DE MESA (OPTIMIZADO PARA TABLET / 720p / MÓVIL) -->
     <div id="view-table-detail" class="flex-1 flex flex-col hidden overflow-y-auto fade-enter">
-      <header class="bg-white border-b px-4 py-3 flex items-center justify-between shadow-sm sticky top-0 z-30">
-        <button onclick="navigate('dashboard')" class="text-zolimar-royalBlue hover:text-zolimar-royalDark flex items-center text-xs font-bold bg-blue-50 px-3 py-1.5 rounded-xl border border-blue-200 transition">
-          <i data-lucide="chevron-left" class="w-4 h-4 mr-1"></i> Volver a Mesas
-        </button>
-        <div class="text-center">
-          <h2 id="detail-table-title" class="font-extrabold text-zolimar-royalBlue text-sm sm:text-base">Mesa 1</h2>
-          <span id="detail-table-badge" class="text-[10px] bg-amber-100 text-amber-900 font-bold px-2 py-0.5 rounded-full">0/10 Servidos</span>
-        </div>
-        <!-- Navegación Rápida entre Mesas y Botones de Aumentar / Quitar Mesa -->
-        <div class="flex items-center space-x-1.5">
-          <div class="flex items-center space-x-1">
-            <button onclick="changeSelectedTable(-1)" title="Mesa Anterior" class="p-1.5 rounded-lg bg-gray-100 text-gray-700 hover:bg-gray-200">
+      <header class="bg-white border-b px-3 sm:px-4 py-2.5 sm:py-3 flex flex-wrap items-center justify-between gap-2 shadow-sm sticky top-0 z-30">
+        <div class="flex items-center space-x-2">
+          <button onclick="navigate('dashboard')" class="text-zolimar-royalBlue hover:text-zolimar-royalDark flex items-center text-xs font-bold bg-blue-50 px-3 py-1.5 rounded-xl border border-blue-200 transition shadow-xs">
+            <i data-lucide="chevron-left" class="w-4 h-4 mr-1"></i>
+            <span>Volver</span>
+          </button>
+          <div class="flex items-center space-x-0.5">
+            <button onclick="changeSelectedTable(-1)" title="Mesa Anterior" class="p-1.5 rounded-lg bg-gray-100 text-gray-700 hover:bg-gray-200 transition">
               <i data-lucide="chevron-left" class="w-4 h-4"></i>
             </button>
-            <button onclick="changeSelectedTable(1)" title="Mesa Siguiente" class="p-1.5 rounded-lg bg-gray-100 text-gray-700 hover:bg-gray-200">
+            <button onclick="changeSelectedTable(1)" title="Mesa Siguiente" class="p-1.5 rounded-lg bg-gray-100 text-gray-700 hover:bg-gray-200 transition">
               <i data-lucide="chevron-right" class="w-4 h-4"></i>
             </button>
           </div>
-          <button onclick="addTable()" title="Aumentar una nueva mesa" class="bg-emerald-600 text-white font-bold px-2 py-1.5 rounded-lg text-xs hover:bg-emerald-700 transition shadow flex items-center space-x-1">
+        </div>
+
+        <div class="text-center">
+          <h2 id="detail-table-title" class="font-black text-zolimar-royalBlue text-base sm:text-lg tracking-tight">Mesa 1</h2>
+          <span id="detail-table-badge" class="text-[10px] bg-amber-100 text-amber-900 font-extrabold px-2.5 py-0.5 rounded-full border border-amber-300">0/10 Servidos</span>
+        </div>
+
+        <!-- BOTONES DE ACCIÓN DIRECTOS: COMIDAS & BEBIDAS Y GESTIÓN DE MESAS -->
+        <div class="flex items-center space-x-1.5">
+          <button onclick="openMenuCatalogModal()" title="Ingresar manualmente comidas y bebidas que se servirán" class="bg-zolimar-royalBlue text-zolimar-gold border-2 border-zolimar-gold hover:bg-zolimar-royalDark font-extrabold px-2.5 sm:px-3 py-1.5 rounded-xl text-[11px] sm:text-xs flex items-center space-x-1.5 shadow transition active:scale-95">
+            <i data-lucide="utensils-crossed" class="w-3.5 h-3.5 text-zolimar-gold"></i>
+            <span>🍽️ Comidas y Bebidas</span>
+          </button>
+          <button onclick="removeTable()" title="Quitar 1 mesa" class="bg-red-600 hover:bg-red-700 text-white font-bold px-2 sm:px-2.5 py-1.5 rounded-xl text-xs transition shadow flex items-center space-x-0.5 active:scale-95">
+            <i data-lucide="minus" class="w-3.5 h-3.5"></i>
+            <span class="hidden sm:inline">Quitar</span>
+          </button>
+          <button onclick="addTable()" title="Aumentar 1 mesa" class="bg-zolimar-royalBlue hover:bg-zolimar-royalDark text-zolimar-gold border border-zolimar-gold/60 font-bold px-2 sm:px-2.5 py-1.5 rounded-xl text-xs transition shadow flex items-center space-x-0.5 active:scale-95">
             <i data-lucide="plus" class="w-3.5 h-3.5"></i>
-            <span class="hidden sm:inline">Mesa</span>
+            <span class="hidden sm:inline">Aumentar</span>
           </button>
         </div>
       </header>
@@ -893,124 +910,92 @@
         </button>
       </div>
 
-      <!-- CONTENIDO PRINCIPAL: DISTRIBUCIÓN RESPONSIVA TABLET / 720p (2 COLUMNAS) -->
-      <div class="flex-1 flex flex-col md:grid md:grid-cols-12 md:gap-4 md:p-4 bg-slate-50">
+      <!-- CONTENIDO PRINCIPAL: DISTRIBUCIÓN RESPONSIVA OPTIMIZADA (AZUL REALEZA) -->
+      <div class="flex-1 flex flex-col p-3 sm:p-4 bg-slate-50 space-y-3">
         
-        <!-- COLUMNA IZQUIERDA: DIAGRAMA CIRCULAR DE MESA INTERACTIVA CON MARCAS DE AGUA -->
-        <div id="detail-table-diagram-container" class="md:col-span-7 flex flex-col items-center justify-center p-3 sm:p-5 bg-gradient-to-b from-blue-50/70 via-slate-50 to-blue-50/70 md:rounded-2xl md:border md:border-blue-200/80 shadow-sm relative min-h-[440px] overflow-hidden">
+        <!-- BARRA SUPERIOR DE LA MESA: BOTÓN COMIDAS Y BEBIDAS + TOGGLES DE SERVICIO -->
+        <div class="bg-gradient-to-r from-zolimar-royalBlue to-zolimar-royalDark text-white p-3 rounded-2xl shadow-md border border-zolimar-gold/40 flex flex-wrap items-center justify-between gap-2.5">
+          <div class="flex items-center space-x-2">
+            <button onclick="openMenuCatalogModal()" title="Ingresar qué platos y bebidas se servirán" class="bg-zolimar-gold hover:bg-zolimar-goldLight text-zolimar-royalDark font-black px-3.5 py-1.5 rounded-xl text-xs flex items-center space-x-1.5 transition shadow-lg active:scale-95">
+              <i data-lucide="utensils-crossed" class="w-4 h-4 text-zolimar-royalDark"></i>
+              <span>🍽️ Ingresar Comidas y Bebidas</span>
+            </button>
+            <span class="text-[11px] text-blue-200 font-semibold hidden sm:inline">Configura qué platos y bebidas se servirán en el evento</span>
+          </div>
+
+          <!-- Toggles de Servicio para esta mesa -->
+          <div class="flex items-center space-x-3 bg-white/10 px-3 py-1 rounded-xl border border-white/20 text-xs">
+            <label class="flex items-center space-x-1.5 cursor-pointer select-none font-bold">
+              <input id="food-toggle" type="checkbox" onchange="updateTableToggles()" title="Activar/Desactivar Entrega de Comida en esta Mesa" class="w-4 h-4 accent-zolimar-royalBlue cursor-pointer">
+              <span>🍲 Comida Activa</span>
+            </label>
+            <span class="text-white/30">|</span>
+            <label class="flex items-center space-x-1.5 cursor-pointer select-none font-bold">
+              <input id="drink-toggle" type="checkbox" onchange="updateTableToggles()" title="Activar/Desactivar Entrega de Bebida en esta Mesa" class="w-4 h-4 accent-blue-500 cursor-pointer">
+              <span>🥤 Bebida Activa</span>
+            </label>
+          </div>
+        </div>
+
+        <!-- RESUMEN COMPACTO DE LA CARTA CONFIGURADA (AZUL REALEZA) -->
+        <div class="bg-white p-2.5 rounded-2xl border border-blue-200 shadow-xs flex flex-wrap items-center justify-between gap-2 text-xs">
+          <div class="flex-1 flex flex-wrap items-center gap-2">
+            <div class="flex items-center space-x-1.5">
+              <span class="font-extrabold text-zolimar-royalBlue text-[11px] uppercase">🍲 Platos:</span>
+              <div id="food-catalog-pills" class="flex flex-wrap gap-1"></div>
+            </div>
+            <span class="text-gray-300 hidden md:inline">•</span>
+            <div class="flex items-center space-x-1.5">
+              <span class="font-extrabold text-blue-700 text-[11px] uppercase">🥤 Bebidas:</span>
+              <div id="drink-catalog-pills" class="flex flex-wrap gap-1"></div>
+            </div>
+          </div>
+          <button onclick="openMenuCatalogModal()" class="text-[10px] text-zolimar-royalBlue hover:underline font-bold flex items-center space-x-0.5">
+            <span>Editar Lista Completa</span>
+            <i data-lucide="chevron-right" class="w-3 h-3"></i>
+          </button>
+        </div>
+
+        <!-- CONTENEDOR DE LA MESA CIRCULAR INTERACTIVA CON MARCAS DE AGUA -->
+        <div id="detail-table-diagram-container" class="flex-1 flex flex-col items-center justify-center p-3 sm:p-5 bg-gradient-to-b from-blue-50/60 via-slate-50 to-blue-50/60 rounded-2xl border border-blue-200/80 shadow-sm relative min-h-[460px] overflow-hidden">
           
           <!-- MARCAS DE AGUA EN ESPACIOS VACÍOS -->
-          <div class="absolute top-2 left-1/2 -translate-x-1/2 w-48 h-20 sm:w-56 sm:h-24 rounded-2xl overflow-hidden opacity-[0.16] pointer-events-none border border-blue-400/30 shadow-inner z-0">
+          <div class="absolute top-2 left-1/2 -translate-x-1/2 w-56 h-24 rounded-2xl overflow-hidden opacity-[0.15] pointer-events-none border border-blue-400/30 shadow-inner z-0">
             <img src="/bg-event-3.jpg" alt="Techo y Luces Evento" class="w-full h-full object-cover">
           </div>
-          <div class="absolute left-2 top-1/2 -translate-y-1/2 w-32 h-44 sm:w-40 sm:h-52 rounded-2xl overflow-hidden opacity-[0.16] pointer-events-none border border-blue-400/30 shadow-inner z-0">
+          <div class="absolute left-2 top-1/2 -translate-y-1/2 w-40 h-52 rounded-2xl overflow-hidden opacity-[0.15] pointer-events-none border border-blue-400/30 shadow-inner z-0">
             <img src="/bg-event-1.jpg" alt="Salón Principal Zolimar" class="w-full h-full object-cover">
           </div>
-          <div class="absolute right-2 top-1/2 -translate-y-1/2 w-32 h-44 sm:w-40 sm:h-52 rounded-2xl overflow-hidden opacity-[0.16] pointer-events-none border border-blue-400/30 shadow-inner z-0">
+          <div class="absolute right-2 top-1/2 -translate-y-1/2 w-40 h-52 rounded-2xl overflow-hidden opacity-[0.15] pointer-events-none border border-blue-400/30 shadow-inner z-0">
             <img src="/bg-event-2.jpg" alt="Piscina y Luces Zolimar" class="w-full h-full object-cover">
           </div>
 
-          <div class="w-full flex justify-between items-center text-[10px] text-gray-600 font-bold px-2 mb-1 z-10">
-            <span class="flex items-center space-x-1 bg-white/90 px-2 py-0.5 rounded-full border border-emerald-300 shadow-xs"><i data-lucide="utensils" class="w-3 h-3 text-emerald-600"></i><span>🍽️ Verde = Comida</span></span>
-            <span class="flex items-center space-x-1 bg-white/90 px-2 py-0.5 rounded-full border border-blue-300 shadow-xs"><i data-lucide="wine" class="w-3 h-3 text-blue-600"></i><span>🥤 Azul = Bebida</span></span>
+          <div class="w-full max-w-md flex justify-between items-center text-[11px] text-gray-700 font-bold px-2 mb-1 z-10">
+            <span class="flex items-center space-x-1.5 bg-white/90 px-3 py-1 rounded-full border border-blue-300 shadow-xs">
+              <i data-lucide="utensils" class="w-3.5 h-3.5 text-zolimar-royalBlue"></i>
+              <span>🍲 Comida</span>
+            </span>
+            <span class="flex items-center space-x-1.5 bg-white/90 px-3 py-1 rounded-full border border-blue-300 shadow-xs">
+              <i data-lucide="wine" class="w-3.5 h-3.5 text-blue-600"></i>
+              <span>🥤 Bebida</span>
+            </span>
           </div>
 
           <!-- Mesa Circular con Radio Táctil Dinámico -->
-          <div class="relative w-72 h-72 sm:w-84 sm:h-84 md:w-96 md:h-96 flex items-center justify-center my-2 select-none z-10">
-            <div class="w-32 h-32 sm:w-36 sm:h-36 md:w-40 md:h-40 rounded-full bg-gradient-to-br from-zolimar-royalDark to-zolimar-royalBlue border-4 border-zolimar-gold flex items-center justify-center shadow-2xl z-20 text-center text-white p-2">
+          <div class="relative w-80 h-80 sm:w-96 sm:h-96 md:w-[420px] md:h-[420px] flex items-center justify-center my-2 select-none z-10">
+            <div class="w-36 h-36 sm:w-40 sm:h-40 md:w-44 md:h-44 rounded-full bg-gradient-to-br from-zolimar-royalDark to-zolimar-royalBlue border-4 border-zolimar-gold flex items-center justify-center shadow-2xl z-20 text-center text-white p-2">
               <div>
-                <i data-lucide="crown" class="w-5 h-5 sm:w-6 sm:h-6 text-zolimar-gold mx-auto"></i>
-                <div id="detail-center-table-num" class="text-xs sm:text-sm font-extrabold text-zolimar-gold mt-0.5">Mesa 1</div>
-                <div id="detail-center-progress-text" class="text-[9px] sm:text-[10px] text-blue-200 font-semibold">0/10 Servidos</div>
+                <i data-lucide="crown" class="w-6 h-6 text-zolimar-gold mx-auto"></i>
+                <div id="detail-center-table-num" class="text-sm sm:text-base font-extrabold text-zolimar-gold mt-0.5">Mesa 1</div>
+                <div id="detail-center-progress-text" class="text-[10px] sm:text-xs text-blue-200 font-semibold">0/10 Servidos</div>
               </div>
             </div>
             <div id="detail-chairs-container" class="absolute inset-0 z-20"></div>
           </div>
 
-          <p class="text-[10px] text-gray-700 font-medium text-center mt-1 italic z-10 bg-white/80 px-3 py-0.5 rounded-full border border-blue-200">
-            👆 Toca cualquier silla para registrar entregas o cambiar el estado del comensal.
+          <p class="text-xs text-gray-700 font-semibold text-center mt-1 italic z-10 bg-white/80 px-4 py-1 rounded-full border border-blue-200 shadow-xs">
+            👆 Toca cualquier silla para registrar entregas o cambiar el plato del comensal.
           </p>
-        </div>
-
-        <!-- COLUMNA DERECHA: ENTRADA DIRECTA DE COMIDAS Y BEBIDAS QUE SE SERVIRÁN -->
-        <div id="admin-service-catalog-panel" class="md:col-span-5 flex flex-col space-y-3 p-3 md:p-0">
-          
-          <div class="bg-gradient-to-r from-zolimar-royalBlue to-zolimar-royalDark text-white px-3.5 py-2.5 rounded-2xl shadow flex items-center justify-between border border-zolimar-gold/40">
-            <span class="flex items-center space-x-1.5 font-extrabold text-xs text-zolimar-gold">
-              <i data-lucide="utensils-crossed" class="w-4 h-4"></i>
-              <span>COMIDAS Y BEBIDAS A SERVIR</span>
-            </span>
-            <button onclick="openMenuCatalogModal()" title="Abrir Administrador Completo de Menú" class="text-[10px] bg-zolimar-gold hover:bg-zolimar-goldLight text-zolimar-royalDark font-extrabold px-2.5 py-1 rounded-lg transition shadow">
-              ⚙️ Gestionar Carta
-            </button>
-          </div>
-          
-          <!-- SECCIÓN 1: INGRESO MANUAL DE PLATOS Y COMIDA -->
-          <div class="p-3.5 bg-white rounded-2xl border border-emerald-200 shadow-sm space-y-2.5">
-            <div class="flex items-center justify-between border-b border-gray-100 pb-2">
-              <div class="flex items-center space-x-2">
-                <div class="w-7 h-7 bg-emerald-600 text-white rounded-lg flex items-center justify-center shadow">
-                  <i data-lucide="utensils" class="w-4 h-4"></i>
-                </div>
-                <div>
-                  <h3 class="text-xs font-bold text-gray-900">🍲 Platos / Menús del Día</h3>
-                  <p class="text-[9px] text-gray-500">Escribe aquí los platos que se servirán</p>
-                </div>
-              </div>
-              <input id="food-toggle" type="checkbox" onchange="updateTableToggles()" title="Activar/Desactivar Servicio de Comida en Mesa" class="w-5 h-5 accent-emerald-600 cursor-pointer">
-            </div>
-
-            <!-- Entrada rápida para escribir y agregar plato -->
-            <div class="flex space-x-1.5">
-              <input id="direct-food-input" type="text" placeholder="Escribe plato (ej. Lomo Saltado Gourmet...)" onkeydown="if(event.key==='Enter') addDirectFoodItem()" class="flex-1 text-xs p-2 border border-emerald-300 rounded-xl focus:ring-2 focus:ring-emerald-500 outline-none bg-emerald-50/20 font-semibold text-gray-800">
-              <button onclick="addDirectFoodItem()" class="bg-emerald-600 hover:bg-emerald-700 text-white font-bold px-3 py-2 rounded-xl text-xs transition shadow flex items-center space-x-1 active:scale-95">
-                <i data-lucide="plus" class="w-3.5 h-3.5"></i>
-                <span>Agregar</span>
-              </button>
-            </div>
-
-            <!-- Lista de Platos Activos con botón (x) para eliminar y editar -->
-            <div>
-              <span class="text-[9px] font-bold text-gray-600 uppercase block mb-1">Platos Configurados:</span>
-              <div id="food-catalog-pills" class="flex flex-wrap gap-1.5 min-h-[32px]">
-                <!-- Se puebla dinámicamente -->
-              </div>
-            </div>
-          </div>
-
-          <!-- SECCIÓN 2: INGRESO MANUAL DE BEBIDAS Y LICORES -->
-          <div class="p-3.5 bg-white rounded-2xl border border-blue-200 shadow-sm space-y-2.5">
-            <div class="flex items-center justify-between border-b border-gray-100 pb-2">
-              <div class="flex items-center space-x-2">
-                <div class="w-7 h-7 bg-zolimar-royalBlue text-white rounded-lg flex items-center justify-center shadow">
-                  <i data-lucide="wine" class="w-4 h-4"></i>
-                </div>
-                <div>
-                  <h3 class="text-xs font-bold text-gray-900">🥤 Bebidas & Licores del Día</h3>
-                  <p class="text-[9px] text-gray-500">Escribe aquí las bebidas y licores a servir</p>
-                </div>
-              </div>
-              <input id="drink-toggle" type="checkbox" onchange="updateTableToggles()" title="Activar/Desactivar Servicio de Bebidas en Mesa" class="w-5 h-5 accent-blue-600 cursor-pointer">
-            </div>
-
-            <!-- Entrada rápida para escribir y agregar bebida -->
-            <div class="flex space-x-1.5">
-              <input id="direct-drink-input" type="text" placeholder="Escribe bebida (ej. Pisco Sour, Vino Tinto...)" onkeydown="if(event.key==='Enter') addDirectDrinkItem()" class="flex-1 text-xs p-2 border border-blue-300 rounded-xl focus:ring-2 focus:ring-zolimar-blueBright outline-none bg-blue-50/20 font-semibold text-gray-800">
-              <button onclick="addDirectDrinkItem()" class="bg-zolimar-royalBlue hover:bg-zolimar-royalDark text-zolimar-gold font-bold px-3 py-2 rounded-xl text-xs transition shadow flex items-center space-x-1 active:scale-95">
-                <i data-lucide="plus" class="w-3.5 h-3.5"></i>
-                <span>Agregar</span>
-              </button>
-            </div>
-
-            <!-- Lista de Bebidas Activas con botón (x) para eliminar y editar -->
-            <div>
-              <span class="text-[9px] font-bold text-gray-600 uppercase block mb-1">Bebidas Configuradas:</span>
-              <div id="drink-catalog-pills" class="flex flex-wrap gap-1.5 min-h-[32px]">
-                <!-- Se puebla dinámicamente -->
-              </div>
-            </div>
-          </div>
-
         </div>
 
       </div>
@@ -1195,15 +1180,15 @@
 
     async function removeTable() {
       if (!authToken) {
-        showToast('Inicia sesión para gestionar mesas');
+        showToast('Inicia sesión como administrador');
         return;
       }
-      const totalTables = eventData.tables.length;
+      const totalTables = eventData.tables ? eventData.tables.length : 1;
       if (totalTables <= 1) {
-        alert('Debe haber al menos 1 mesa en el evento.');
+        alert('Debe existir al menos 1 mesa en el evento.');
         return;
       }
-      if (!confirm(`¿Estás seguro de quitar la Mesa ${totalTables}? (Solo se eliminará si no tiene comensales asignados)`)) {
+      if (!confirm(`¿Deseas quitar la Mesa ${totalTables}? Se retirará del evento.`)) {
         return;
       }
 
@@ -1211,11 +1196,14 @@
         const res = await fetch('/api/admin/tables/remove', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${authToken}` },
-          body: JSON.stringify({ tableId: totalTables })
+          body: JSON.stringify({ tableId: totalTables, force: true })
         });
         const data = await res.json();
         if (!res.ok) throw new Error(data.error);
         showToast(data.message || 'Mesa eliminada con éxito');
+        if (selectedTableId >= totalTables) {
+          selectedTableId = Math.max(1, totalTables - 1);
+        }
         fetchEventData();
       } catch (err) {
         alert(err.message);
@@ -1525,7 +1513,7 @@
     function filterAttReport(filter) {
       attCurrentFilter = filter;
       document.getElementById('att-filter-all').className = filter === 'all' ? 'px-2.5 py-1 rounded-lg text-[10px] font-bold bg-zolimar-royalBlue text-zolimar-gold' : 'px-2.5 py-1 rounded-lg text-[10px] font-bold bg-white text-gray-600 border';
-      document.getElementById('att-filter-entered').className = filter === 'entered' ? 'px-2.5 py-1 rounded-lg text-[10px] font-bold bg-emerald-600 text-white' : 'px-2.5 py-1 rounded-lg text-[10px] font-bold bg-white text-gray-600 border';
+      document.getElementById('att-filter-entered').className = filter === 'entered' ? 'px-2.5 py-1 rounded-lg text-[10px] font-bold bg-zolimar-royalBlue text-white' : 'px-2.5 py-1 rounded-lg text-[10px] font-bold bg-white text-gray-600 border';
       document.getElementById('att-filter-pending').className = filter === 'pending' ? 'px-2.5 py-1 rounded-lg text-[10px] font-bold bg-red-600 text-white' : 'px-2.5 py-1 rounded-lg text-[10px] font-bold bg-white text-gray-600 border';
       renderAttendanceReport();
     }
@@ -1566,13 +1554,13 @@
       filtered.forEach(g => {
         const hasEntered = g.status === 'In Progress' || g.status === 'Checked In' || g.status === 'Served';
         const item = document.createElement('div');
-        item.className = `p-2 rounded-xl border flex items-center justify-between text-xs ${hasEntered ? 'bg-emerald-50/80 border-emerald-200' : 'bg-red-50/80 border-red-200'}`;
+        item.className = `p-2 rounded-xl border flex items-center justify-between text-xs ${hasEntered ? 'bg-blue-50/80 border-blue-200' : 'bg-red-50/80 border-red-200'}`;
         item.innerHTML = `
           <div>
-            <div class="font-bold ${hasEntered ? 'text-emerald-950' : 'text-red-950'}">${escapeHtml(g.name)}</div>
+            <div class="font-bold ${hasEntered ? 'text-zolimar-royalDark' : 'text-red-950'}">${escapeHtml(g.name)}</div>
             <div class="text-[9px] text-gray-500">Mesa ${g.table_id} - Silla ${g.seat}</div>
           </div>
-          <span class="px-2 py-0.5 rounded-full text-[9px] font-bold ${hasEntered ? 'bg-emerald-200 text-emerald-900' : 'bg-red-200 text-red-900'}">
+          <span class="px-2 py-0.5 rounded-full text-[9px] font-bold ${hasEntered ? 'bg-blue-200 text-zolimar-royalDark' : 'bg-red-200 text-red-900'}">
             ${hasEntered ? 'Ingresó' : 'Falta'}
           </span>
         `;
@@ -1597,7 +1585,7 @@
     function filterFdReport(filter) {
       fdCurrentFilter = filter;
       document.getElementById('fd-filter-all').className = filter === 'all' ? 'px-2.5 py-1 rounded-lg text-[10px] font-bold bg-zolimar-royalBlue text-zolimar-gold' : 'px-2.5 py-1 rounded-lg text-[10px] font-bold bg-white text-gray-600 border';
-      document.getElementById('fd-filter-food').className = filter === 'food' ? 'px-2.5 py-1 rounded-lg text-[10px] font-bold bg-emerald-600 text-white' : 'px-2.5 py-1 rounded-lg text-[10px] font-bold bg-white text-gray-600 border';
+      document.getElementById('fd-filter-food').className = filter === 'food' ? 'px-2.5 py-1 rounded-lg text-[10px] font-bold bg-zolimar-royalBlue text-white' : 'px-2.5 py-1 rounded-lg text-[10px] font-bold bg-white text-gray-600 border';
       document.getElementById('fd-filter-drink').className = filter === 'drink' ? 'px-2.5 py-1 rounded-lg text-[10px] font-bold bg-blue-600 text-white' : 'px-2.5 py-1 rounded-lg text-[10px] font-bold bg-white text-gray-600 border';
       document.getElementById('fd-filter-complete').className = filter === 'complete' ? 'px-2.5 py-1 rounded-lg text-[10px] font-bold bg-slate-600 text-white' : 'px-2.5 py-1 rounded-lg text-[10px] font-bold bg-white text-gray-600 border';
       renderFoodDrinkReport();
@@ -1644,7 +1632,7 @@
             <div class="text-[9px] text-gray-500">Mesa ${g.table_id} - Silla ${g.seat} (${escapeHtml(g.dietary || 'Standard')})</div>
           </div>
           <div class="flex items-center space-x-1.5 font-bold text-[10px]">
-            <span class="${g.food_served ? 'text-emerald-700 bg-emerald-100' : 'text-gray-400 bg-gray-100'} px-1.5 py-0.5 rounded">🍲 ${g.food_served ? 'Listo' : 'Pend'}</span>
+            <span class="${g.food_served ? 'text-zolimar-royalBlue bg-blue-100' : 'text-gray-400 bg-gray-100'} px-1.5 py-0.5 rounded">🍲 ${g.food_served ? 'Listo' : 'Pend'}</span>
             <span class="${g.drink_served ? 'text-blue-700 bg-blue-100' : 'text-gray-400 bg-gray-100'} px-1.5 py-0.5 rounded">🥤 ${g.drink_served ? 'Listo' : 'Pend'}</span>
           </div>
         `;
@@ -2565,14 +2553,14 @@
         foodPills.innerHTML = '';
         const foods = (eventData.menuCatalog || []).filter(m => m.category === 'food');
         if (foods.length === 0) {
-          foodPills.innerHTML = '<span class="text-[10px] text-gray-400 italic">Escribe arriba para agregar platos a la carta</span>';
+          foodPills.innerHTML = '<button type="button" onclick="openMenuCatalogModal()" class="text-[10px] text-zolimar-royalBlue hover:underline italic font-medium">➕ Agregar platos a la carta</button>';
         } else {
           foods.forEach(f => {
             const span = document.createElement('span');
-            span.className = 'bg-emerald-50 text-emerald-950 border border-emerald-300 text-[10px] font-bold px-2 py-1 rounded-lg flex items-center space-x-1.5 shadow-xs group';
+            span.className = 'bg-blue-50 text-zolimar-royalDark border border-blue-300 text-[10px] font-bold px-2 py-1 rounded-lg flex items-center space-x-1.5 shadow-xs group';
             span.innerHTML = `
               <span>🍲 ${escapeHtml(f.name)}</span>
-              <button onclick="editCatalogItemPrompt(${f.id}, '${escapeHtml(f.name)}', 'food')" title="Editar" class="text-emerald-700 hover:text-emerald-900 font-bold px-0.5">✏️</button>
+              <button onclick="editCatalogItemPrompt(${f.id}, '${escapeHtml(f.name)}', 'food')" title="Editar" class="text-zolimar-royalBlue hover:text-zolimar-royalDark font-bold px-0.5">✏️</button>
               <button onclick="deleteCatalogItem(${f.id}, '${escapeHtml(f.name)}')" title="Eliminar" class="text-red-500 hover:text-red-700 font-bold px-0.5">✕</button>
             `;
             foodPills.appendChild(span);
@@ -2584,7 +2572,7 @@
         drinkPills.innerHTML = '';
         const drinks = (eventData.menuCatalog || []).filter(m => m.category === 'drink');
         if (drinks.length === 0) {
-          drinkPills.innerHTML = '<span class="text-[10px] text-gray-400 italic">Escribe arriba para agregar bebidas o licores</span>';
+          drinkPills.innerHTML = '<button type="button" onclick="openMenuCatalogModal()" class="text-[10px] text-blue-600 hover:underline italic font-medium">➕ Agregar bebidas a la carta</button>';
         } else {
           drinks.forEach(d => {
             const span = document.createElement('span');
