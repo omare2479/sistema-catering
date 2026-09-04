@@ -239,8 +239,11 @@
         <div class="w-12 h-12 bg-red-100 text-red-600 rounded-full flex items-center justify-center mx-auto mb-1 animate-pulse">
           <i data-lucide="trash-2" class="w-6 h-6"></i>
         </div>
-        <h3 class="text-red-700 font-extrabold text-base">¿Vaciar Lista de Invitados?</h3>
-        <p class="text-xs text-gray-600">Esta acción eliminará a <b>TODOS los comensales</b> del evento y reiniciará el estado de las mesas.</p>
+        <h3 class="text-red-700 font-extrabold text-base flex items-center justify-center space-x-1.5">
+          <i data-lucide="alert-octagon" class="w-5 h-5 text-red-600"></i>
+          <span>¿Resetear Lista a Cero?</span>
+        </h3>
+        <p class="text-xs text-gray-600">Esta acción <b>borrará toda la lista de invitados</b> (tanto los subidos por Excel como los agregados manualmente) y dejará la lista en <b>0 comensales</b>, reiniciando todas las mesas a estado inicial.</p>
 
         <div class="bg-red-50 p-2.5 rounded-xl border border-red-200 text-[11px] text-red-900 text-left">
           ⚠️ <b>Atención:</b> Se guardará una copia en la auditoría del sistema para permitir recuperación en caso de emergencia.
@@ -637,7 +640,7 @@
         </div>
 
         <div class="flex flex-col items-center justify-center space-y-1">
-          <img id="modal-event-banner-preview" src="/bg-event-1.jpg" class="w-20 h-20 sm:w-24 sm:h-24 rounded-full object-cover border-4 border-zolimar-gold shadow-lg">
+          <img id="modal-event-banner-preview" src="/bg-event-1.jpg" class="w-28 h-28 sm:w-36 sm:h-36 rounded-full object-cover border-4 border-zolimar-gold shadow-2xl ring-4 ring-zolimar-gold/30">
           <span class="text-[10px] text-gray-400 font-semibold">Vista Previa del Banner</span>
         </div>
 
@@ -743,7 +746,7 @@
         <!-- COMPONENTE DINÁMICO DEL CENTRO: NOMBRE E IMAGEN DEL EVENTO -->
         <div class="flex flex-col items-center justify-center cursor-pointer group px-2 py-0.5" onclick="openEventBannerModal()" title="Personalizar Nombre e Imagen del Evento (Clic para cambiar)">
           <div class="relative">
-            <img id="header-event-banner" src="/bg-event-1.jpg" alt="Logo Evento" class="w-16 h-16 sm:w-20 sm:h-20 md:w-24 md:h-24 rounded-full object-cover border-3 border-zolimar-gold shadow-xl group-hover:scale-105 transition ring-4 ring-zolimar-gold/30">
+            <img id="header-event-banner" src="/bg-event-1.jpg" alt="Logo Evento" class="w-20 h-20 sm:w-24 sm:h-24 md:w-28 md:h-28 rounded-full object-cover border-4 border-zolimar-gold shadow-2xl group-hover:scale-105 transition ring-4 ring-zolimar-gold/40">
             <span id="header-banner-edit-icon" class="absolute bottom-0 right-0 bg-zolimar-gold text-zolimar-royalDark p-1 rounded-full text-[9px] font-extrabold shadow-lg hidden group-hover:block transition">
               <i data-lucide="camera" class="w-3.5 h-3.5"></i>
             </span>
@@ -813,23 +816,16 @@
             </button>
           </div>
 
-          <!-- BOTONES DE GESTIÓN: COMIDAS Y BEBIDAS, EXCEL, VACIAR LISTA Y REVERTIR -->
-          <div class="flex flex-wrap items-center gap-1.5 sm:gap-2">
-            <button onclick="openMenuCatalogModal()" title="Ingresar manualmente qué comidas y bebidas se servirán" class="bg-zolimar-royalBlue text-zolimar-gold border-2 border-zolimar-gold hover:bg-zolimar-royalDark font-black px-3 py-1.5 rounded-xl text-xs flex items-center space-x-1.5 transition shadow-lg active:scale-95">
+          <!-- BOTÓN DEDICADO: COMIDAS Y BEBIDAS + ACCESO A INVITADOS -->
+          <div class="flex flex-wrap items-center gap-2">
+            <span class="text-xs text-blue-200 font-bold hidden md:inline">👥 <span id="dash-total-guests-badge">0</span> Comensales</span>
+            <button onclick="openMenuCatalogModal()" title="Ingresar manualmente qué comidas y bebidas se servirán" class="bg-zolimar-royalBlue text-zolimar-gold border-2 border-zolimar-gold hover:bg-zolimar-royalDark font-black px-4 py-2 rounded-xl text-xs flex items-center space-x-1.5 transition shadow-lg active:scale-95">
               <i data-lucide="utensils-crossed" class="w-4 h-4 text-zolimar-gold"></i>
               <span>🍽️ Comidas y Bebidas</span>
             </button>
-            <button onclick="openUploadExcelModal()" title="Cargar archivo Excel de invitados" class="bg-blue-600 hover:bg-blue-700 text-white font-bold px-2.5 py-1.5 rounded-xl text-xs flex items-center space-x-1 transition shadow">
-              <i data-lucide="file-spreadsheet" class="w-3.5 h-3.5"></i>
-              <span>Excel</span>
-            </button>
-            <button onclick="openClearGuestsModal()" title="Eliminar lista completa de invitados del evento" class="bg-red-600 hover:bg-red-700 text-white font-black px-2.5 py-1.5 rounded-xl text-xs flex items-center space-x-1 transition shadow-md active:scale-95 border border-red-400">
-              <i data-lucide="trash-2" class="w-3.5 h-3.5"></i>
-              <span>Vaciar Lista</span>
-            </button>
-            <button onclick="startUndoProcess()" title="Confirmación de revertir a cero la lista / restaurar copia previa de seguridad" class="bg-amber-500 hover:bg-amber-600 text-white font-black px-2.5 py-1.5 rounded-xl text-xs flex items-center space-x-1 transition shadow-md active:scale-95 border border-amber-300">
-              <i data-lucide="rotate-ccw" class="w-3.5 h-3.5"></i>
-              <span>Revertir Lista</span>
+            <button onclick="navigate('guests')" title="Ir al módulo de Invitados (Cargar Excel y Gestionar lista)" class="bg-zolimar-gold hover:bg-zolimar-goldLight text-zolimar-royalDark font-black px-3 py-2 rounded-xl text-xs flex items-center space-x-1.5 shadow-md active:scale-95 transition">
+              <i data-lucide="users" class="w-4 h-4"></i>
+              <span>Ver Invitados & Excel ➔</span>
             </button>
           </div>
         </div>
@@ -859,7 +855,7 @@
         <div class="absolute inset-0 bg-cover bg-center opacity-[0.04] pointer-events-none" style="background-image: url('/bg-event-3.jpg');"></div>
         
         <!-- MARCA DE AGUA DEL LOGO DEL EVENTO EN EL CENTRO DE LA PARTE BLANCA (TAMAÑO VISIBLE) -->
-        <div class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-64 h-64 sm:w-80 sm:h-80 md:w-[380px] md:h-[380px] rounded-full overflow-hidden opacity-[0.16] pointer-events-none z-0 flex items-center justify-center border-4 border-zolimar-gold/30 shadow-2xl">
+        <div class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-80 h-80 sm:w-96 sm:h-96 md:w-[440px] md:h-[440px] rounded-full overflow-hidden opacity-[0.18] pointer-events-none z-0 flex items-center justify-center border-4 border-zolimar-gold/30 shadow-2xl">
           <img id="dashboard-watermark-logo" src="/bg-event-1.jpg" alt="Marca de Agua Logo Evento" class="w-full h-full object-cover rounded-full filter contrast-125">
         </div>
 
@@ -988,7 +984,7 @@
           </div>
 
           <!-- MARCA DE AGUA DEL LOGO DEL EVENTO EN EL CENTRO DE LA PARTE BLANCA (TAMAÑO VISIBLE) -->
-          <div class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-72 h-72 sm:w-88 sm:h-88 md:w-[440px] md:h-[440px] rounded-full overflow-hidden opacity-[0.20] pointer-events-none z-0 flex items-center justify-center border-4 border-zolimar-gold/30 shadow-2xl">
+          <div class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-80 h-80 sm:w-96 sm:h-96 md:w-[480px] md:h-[480px] rounded-full overflow-hidden opacity-[0.24] pointer-events-none z-0 flex items-center justify-center border-4 border-zolimar-gold/40 shadow-2xl">
             <img id="detail-watermark-logo" src="/bg-event-1.jpg" alt="Marca de Agua Logo Evento" class="w-full h-full object-cover rounded-full filter contrast-125">
           </div>
 
@@ -1030,21 +1026,34 @@
         <span class="text-xs font-semibold text-gray-200">Lista Completa de Invitados</span>
       </header>
 
-      <!-- Panel Admin para subir Excel, Vaciar Lista y Deshacer -->
-      <div id="admin-panel" class="hidden p-3 bg-blue-50 border-b border-blue-200 space-y-2">
-        <div class="flex flex-wrap gap-2">
-          <button onclick="openUploadExcelModal()" class="flex-1 min-w-[120px] bg-zolimar-royalBlue text-zolimar-gold text-xs font-bold py-2 px-3 rounded-lg flex items-center justify-center space-x-1 shadow hover:bg-zolimar-royalDark transition">
-            <i data-lucide="upload-cloud" class="w-4 h-4"></i>
-            <span>Importar Excel</span>
-          </button>
-          <button onclick="openClearGuestsModal()" class="bg-red-600 text-white text-xs font-bold px-3 py-2 rounded-lg flex items-center space-x-1 hover:bg-red-700 transition shadow">
-            <i data-lucide="trash-2" class="w-4 h-4"></i>
-            <span>Vaciar Lista</span>
-          </button>
-          <button onclick="startUndoProcess()" class="bg-amber-100 text-amber-800 border border-amber-300 text-xs font-bold px-3 py-2 rounded-lg flex items-center space-x-1 hover:bg-amber-200 transition">
-            <i data-lucide="rotate-ccw" class="w-4 h-4"></i>
-            <span>Revertir</span>
-          </button>
+      <!-- PANEL ADMIN DE INVITADOS: EXCEL, RESETEAR/RESTAURAR A CERO Y AGREGAR -->
+      <div id="admin-panel" class="p-3.5 bg-gradient-to-r from-zolimar-royalBlue to-zolimar-royalDark text-white border-b border-zolimar-gold/40 shadow-md">
+        <div class="flex flex-wrap items-center justify-between gap-2.5">
+          <div>
+            <h3 class="font-black text-xs sm:text-sm text-zolimar-gold flex items-center space-x-1.5">
+              <i data-lucide="file-spreadsheet" class="w-4 h-4 text-zolimar-gold"></i>
+              <span>Gestión de Lista de Invitados</span>
+            </h3>
+            <p class="text-[10px] text-blue-200">Importa comensales por Excel o resetea la lista completa a cero</p>
+          </div>
+
+          <!-- BOTONES SOLICITADOS: EXCEL + RESETEO/RESTAURAR A CERO -->
+          <div class="flex flex-wrap items-center gap-2">
+            <button onclick="openUploadExcelModal()" title="Cargar archivo Excel (.xlsx, .xls o .csv)" class="bg-blue-600 hover:bg-blue-700 text-white font-black px-3.5 py-2 rounded-xl text-xs flex items-center space-x-1.5 shadow-md active:scale-95 transition border border-blue-400">
+              <i data-lucide="file-spreadsheet" class="w-4 h-4"></i>
+              <span>📊 Cargar Excel</span>
+            </button>
+
+            <button onclick="openClearGuestsModal()" title="Resetear o restaurar lista a cero (Borra toda la lista subida por Excel o agregada manualmente)" class="bg-red-600 hover:bg-red-700 text-white font-black px-3.5 py-2 rounded-xl text-xs flex items-center space-x-1.5 shadow-md active:scale-95 transition border border-red-400">
+              <i data-lucide="rotate-ccw" class="w-4 h-4"></i>
+              <span>🔄 Resetear / Restaurar a Cero</span>
+            </button>
+
+            <button onclick="startUndoProcess()" title="Deshacer último cambio de lista" class="bg-amber-500 hover:bg-amber-600 text-white font-bold px-2.5 py-2 rounded-xl text-xs flex items-center space-x-1 shadow-md active:scale-95 transition border border-amber-300">
+              <i data-lucide="undo-2" class="w-3.5 h-3.5"></i>
+              <span>Deshacer</span>
+            </button>
+          </div>
         </div>
       </div>
 
