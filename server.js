@@ -366,6 +366,52 @@ app.post('/api/admin/tables/remove', auth, (req, res) => {
   });
 });
 
+// 4.6 Administrador: Ajustar cantidad total de mesas
+app.post('/api/admin/tables/set-count', auth, (req, res) => {
+  if (req.user.role !== 'ADMIN') return res.status(403).json({ error: 'Solo los administradores pueden gestionar mesas.' });
+  const targetCount = parseInt(req.body.count);
+  if (!targetCount || targetCount < 1 || targetCount > 100) {
+    return res.status(400).json({ error: 'La cantidad de mesas debe estar entre 1 y 100.' });
+  }
+
+  db.all(`SELECT id FROM tables ORDER BY id ASC`, (err, rows) => {
+    if (err) return res.status(500).json({ error: err.message });
+    const currentCount = rows.length;
+
+    if (targetCount === currentCount) {
+      return res.json({ success: true, message: `La cantidad de mesas ya es ${targetCount}.` });
+    }
+
+    if (targetCount > currentCount) {
+      // Agregar mesas faltantes
+      const stmt = db.prepare(`INSERT OR IGNORE INTO tables (id, service_status, food_service, drink_service, food_type, drink_type) VALUES (?, 'Pending', 1, 0, 'Menú Estándar', 'Agua & Gaseosa')`);
+      for (let i = currentCount + 1; i <= targetCount; i++) {
+        stmt.run([i]);
+      }
+      stmt.finalize(() => {
+        io.emit('refresh-data');
+        res.json({ success: true, message: `Se aumentaron las mesas a un total de ${targetCount}.` });
+      });
+    } else {
+      // Quitar mesas sobrantes verificando comensales
+      db.all(`SELECT DISTINCT table_id FROM guests WHERE table_id > ?`, [targetCount], (guestErr, guestRows) => {
+        if (guestRows && guestRows.length > 0) {
+          const occupied = guestRows.map(r => r.table_id).join(', ');
+          return res.status(400).json({
+            error: `No se pueden reducir las mesas a ${targetCount} porque las mesas (${occupied}) tienen comensales asignados.`
+          });
+        }
+
+        db.run(`DELETE FROM tables WHERE id > ?`, [targetCount], (delErr) => {
+          if (delErr) return res.status(500).json({ error: delErr.message });
+          io.emit('refresh-data');
+          res.json({ success: true, message: `Se redujeron las mesas a un total de ${targetCount}.` });
+        });
+      });
+    }
+  });
+});
+
 // 5. Agregar un Invitado Manualmente
 app.post('/api/guests/create', auth, (req, res) => {
   const { name, table_id, seat, dietary, tag } = req.body;

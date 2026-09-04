@@ -39,9 +39,8 @@
   <style>
     .hidden { display: none !important; }
     body { margin: 0; padding: 0; font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background-color: #0a192f; }
-    /* Animación suave para transiciones de vista */
-    .fade-enter { animation: fadeIn 0.25s ease-in-out; }
-    @keyframes fadeIn { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: translateY(0); } }
+    .fade-enter { animation: fadeIn 0.2s ease-in-out; }
+    @keyframes fadeIn { from { opacity: 0; transform: translateY(3px); } to { opacity: 1; transform: translateY(0); } }
   </style>
 </head>
 <body class="bg-zolimar-royalDark flex justify-center min-h-screen text-gray-800">
@@ -101,7 +100,7 @@
           <i data-lucide="key-round" class="w-4 h-4 text-zolimar-gold"></i>
           <span>Cambiar Contraseña</span>
         </h3>
-        <p class="text-[11px] text-gray-500 mb-3">Actualiza tu clave de acceso al sistema</p>
+        <p class="text-[11px] text-gray-500 mb-3">Actualiza tu clave de acceso</p>
 
         <form onsubmit="handleChangePasswordSubmit(event)" class="space-y-3">
           <div>
@@ -126,7 +125,53 @@
       </div>
     </div>
 
-    <!-- 3. MODAL DE IMPORTACIÓN DE EXCEL (AGREGAR O REEMPLAZAR) - SOLO ADMIN -->
+    <!-- 3. MODAL DE GESTIÓN DE MESAS (AJUSTAR CANTIDAD EXACTA O AUMENTAR / DISMINUIR) -->
+    <div id="manage-tables-modal" class="fixed inset-0 bg-black/70 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
+      <div class="bg-white rounded-2xl p-5 w-full max-w-xs shadow-2xl border-2 border-zolimar-royalBlue relative space-y-3.5 text-center">
+        <button onclick="closeManageTablesModal()" class="absolute top-3 right-3 text-gray-400 hover:text-gray-600">
+          <i data-lucide="x" class="w-5 h-5"></i>
+        </button>
+
+        <div class="w-12 h-12 bg-blue-100 text-zolimar-royalBlue rounded-full flex items-center justify-center mx-auto shadow">
+          <i data-lucide="layout-grid" class="w-6 h-6"></i>
+        </div>
+        <h3 class="text-zolimar-royalBlue font-extrabold text-base">Ajustar Cantidad de Mesas</h3>
+        <p class="text-xs text-gray-500">Aumenta o disminuye el número de mesas del evento</p>
+
+        <!-- Stepper Directo -->
+        <div class="flex items-center justify-center space-x-3 bg-blue-50 p-3 rounded-xl border border-blue-200">
+          <button onclick="removeTable()" title="Quitar 1 mesa" class="w-10 h-10 bg-red-600 hover:bg-red-700 text-white rounded-xl font-black text-lg flex items-center justify-center shadow active:scale-95 transition">
+            -
+          </button>
+          <div class="text-center">
+            <span id="modal-table-count-display" class="text-2xl font-black text-zolimar-royalBlue block">20</span>
+            <span class="text-[9px] text-gray-500 font-bold uppercase">Mesas Activas</span>
+          </div>
+          <button onclick="addTable()" title="Agregar 1 mesa" class="w-10 h-10 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl font-black text-lg flex items-center justify-center shadow active:scale-95 transition">
+            +
+          </button>
+        </div>
+
+        <!-- O fijar número exacto -->
+        <div class="space-y-1.5 text-left pt-1">
+          <label class="text-[10px] font-bold text-gray-700 uppercase block">O escribe el número exacto de mesas:</label>
+          <div class="flex space-x-2">
+            <input id="exact-tables-input" type="number" min="1" max="100" placeholder="Ej. 25" class="flex-1 text-xs p-2 border border-gray-300 rounded-lg text-center font-bold outline-none focus:ring-2 focus:ring-zolimar-blueBright">
+            <button onclick="applyExactTableCount()" class="bg-zolimar-royalBlue text-zolimar-gold font-bold px-3 py-2 rounded-lg text-xs hover:bg-zolimar-royalDark transition shadow">
+              Aplicar
+            </button>
+          </div>
+        </div>
+
+        <div class="pt-2">
+          <button onclick="closeManageTablesModal()" class="w-full bg-gray-200 text-gray-800 font-bold py-2 rounded-xl text-xs hover:bg-gray-300">
+            Listo / Cerrar
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- 4. MODAL DE IMPORTACIÓN DE EXCEL (AGREGAR O REEMPLAZAR) - SOLO ADMIN -->
     <div id="upload-excel-modal" class="fixed inset-0 bg-black/70 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
       <div class="bg-white rounded-2xl p-5 w-full max-w-sm shadow-2xl border-2 border-zolimar-royalBlue relative space-y-4">
         <button onclick="closeUploadExcelModal()" class="absolute top-3 right-3 text-gray-400 hover:text-gray-600">
@@ -142,7 +187,6 @@
         </div>
 
         <form onsubmit="handleUploadExcelSubmit(event)" class="space-y-3.5">
-          <!-- Dropzone selector de archivo -->
           <div onclick="document.getElementById('excel-file-selector').click()" class="border-2 border-dashed border-zolimar-royalBlue/60 rounded-xl p-4 text-center cursor-pointer hover:bg-blue-50 transition bg-blue-50/30">
             <i data-lucide="upload-cloud" class="w-8 h-8 text-zolimar-royalBlue mx-auto mb-1"></i>
             <p id="excel-file-label" class="text-xs font-bold text-gray-800">Haz clic para seleccionar el archivo Excel</p>
@@ -150,7 +194,6 @@
             <input id="excel-file-selector" type="file" accept=".xlsx, .xls, .csv" onchange="onExcelFileChosen(event)" class="hidden" required>
           </div>
 
-          <!-- Selector de Modo de Importación -->
           <div class="bg-gray-50 p-3 rounded-xl border border-gray-200 space-y-2">
             <label class="text-[10px] font-bold text-gray-700 uppercase block">Modo de Importación:</label>
             <div class="space-y-1.5 text-xs">
@@ -186,7 +229,7 @@
       </div>
     </div>
 
-    <!-- 4. MODAL DE VACIADO TOTAL DE INVITADOS (SOLO ADMIN - SEGURIDAD) -->
+    <!-- 5. MODAL DE VACIADO TOTAL DE INVITADOS (SOLO ADMIN - SEGURIDAD) -->
     <div id="clear-guests-modal" class="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
       <div class="bg-white rounded-2xl p-5 w-full max-w-xs shadow-2xl border-2 border-red-600 relative space-y-3 text-center">
         <button onclick="closeClearGuestsModal()" class="absolute top-3 right-3 text-gray-400 hover:text-gray-600">
@@ -220,15 +263,15 @@
       </div>
     </div>
 
-    <!-- 5. MODAL DE ADMINISTRACIÓN DE CARTA (PLATOS Y BEBIDAS) - SOLO ADMIN -->
+    <!-- 6. MODAL PRINCIPAL: "COMIDAS Y BEBIDAS QUE SE SERVIRÁN" (CATÁLOGO Y ENTRADA MANUAL) -->
     <div id="menu-catalog-modal" class="fixed inset-0 bg-black/70 backdrop-blur-sm z-50 flex items-center justify-center p-3 hidden">
-      <div class="bg-white rounded-2xl w-full max-w-md max-h-[88vh] flex flex-col shadow-2xl border-2 border-zolimar-royalBlue relative">
+      <div class="bg-white rounded-2xl w-full max-w-md max-h-[90vh] flex flex-col shadow-2xl border-2 border-zolimar-royalBlue relative">
         <header class="bg-zolimar-royalBlue text-white p-3.5 rounded-t-2xl flex items-center justify-between shadow">
           <div class="flex items-center space-x-2">
-            <i data-lucide="book-open" class="w-5 h-5 text-zolimar-gold"></i>
+            <i data-lucide="utensils-crossed" class="w-5 h-5 text-zolimar-gold"></i>
             <div>
-              <h3 class="font-bold text-sm text-zolimar-gold">Gestión de Carta & Menú</h3>
-              <p class="text-[10px] text-blue-200">Crear, editar y quitar platos y bebidas del día</p>
+              <h3 class="font-bold text-sm text-zolimar-gold">Comidas y Bebidas del Evento</h3>
+              <p class="text-[10px] text-blue-200">Ingresa manualmente los platos y bebidas que se servirán</p>
             </div>
           </div>
           <button onclick="closeMenuCatalogModal()" class="text-blue-200 hover:text-white">
@@ -236,7 +279,7 @@
           </button>
         </header>
 
-        <!-- Pestañas de Selección (Platos vs Bebidas) -->
+        <!-- Pestañas (Platos vs Bebidas) -->
         <div class="flex border-b bg-gray-50 text-xs font-bold">
           <button id="catalog-tab-food" onclick="switchCatalogTab('food')" class="flex-1 py-2.5 text-center border-b-2 border-zolimar-royalBlue text-zolimar-royalBlue bg-white flex items-center justify-center space-x-1.5">
             <i data-lucide="utensils" class="w-4 h-4 text-emerald-700"></i>
@@ -248,31 +291,31 @@
           </button>
         </div>
 
-        <!-- Formulario para Agregar Nuevo Ítem -->
-        <div class="p-3 bg-blue-50/50 border-b space-y-2">
-          <label id="catalog-input-label" class="text-[10px] font-bold text-zolimar-royalBlue uppercase block">+ Agregar Nuevo Plato:</label>
+        <!-- Formulario Rápido para Agregar -->
+        <div class="p-3 bg-blue-50/70 border-b space-y-2">
+          <label id="catalog-input-label" class="text-[10px] font-bold text-zolimar-royalBlue uppercase block">+ Ingresar Plato Manualmente:</label>
           <div class="flex space-x-2">
-            <input id="catalog-new-name-input" type="text" placeholder="Ej. Lomo Saltado Criollo..." class="flex-1 text-xs p-2 border border-blue-300 rounded-lg focus:ring-2 focus:ring-zolimar-blueBright outline-none bg-white">
-            <button onclick="submitNewCatalogItem()" class="bg-zolimar-royalBlue text-zolimar-gold font-bold px-3 py-2 rounded-lg text-xs hover:bg-zolimar-royalDark transition shadow flex items-center space-x-1">
+            <input id="catalog-new-name-input" type="text" placeholder="Ej. Lomo Saltado Gourmet..." class="flex-1 text-xs p-2.5 border border-blue-300 rounded-xl focus:ring-2 focus:ring-zolimar-blueBright outline-none bg-white font-semibold">
+            <button onclick="submitNewCatalogItem()" class="bg-zolimar-royalBlue hover:bg-zolimar-royalDark text-zolimar-gold font-bold px-3.5 py-2.5 rounded-xl text-xs transition shadow flex items-center space-x-1 active:scale-95">
               <i data-lucide="plus" class="w-4 h-4"></i>
               <span>Agregar</span>
             </button>
           </div>
         </div>
 
-        <!-- Lista de Ítems Existentes con Opciones de Edición y Eliminación -->
+        <!-- Lista de Ítems Existentes con Edición y Borrado -->
         <div class="flex-1 overflow-y-auto p-3 space-y-2" id="catalog-items-list"></div>
 
         <footer class="p-3 bg-gray-100 border-t rounded-b-2xl flex justify-between items-center text-xs">
-          <span class="text-[10px] text-gray-500 font-semibold">Cambios reflejados en tiempo real</span>
-          <button onclick="closeMenuCatalogModal()" class="bg-gray-300 text-gray-800 font-bold px-3 py-1.5 rounded-lg text-xs hover:bg-gray-400">
-            Cerrar
+          <span class="text-[10px] text-gray-500 font-semibold">Se actualiza automáticamente en todas las mesas</span>
+          <button onclick="closeMenuCatalogModal()" class="bg-zolimar-royalBlue text-zolimar-gold font-bold px-4 py-1.5 rounded-lg text-xs hover:bg-zolimar-royalDark transition shadow">
+            Listo
           </button>
         </footer>
       </div>
     </div>
 
-    <!-- 6. MODAL PASO 1 SEGURIDAD DE REVERSIÓN ADMIN -->
+    <!-- 7. MODAL PASO 1 SEGURIDAD DE REVERSIÓN ADMIN -->
     <div id="undo-step1-modal" class="fixed inset-0 bg-black/70 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
       <div class="bg-white rounded-2xl p-5 w-full max-w-xs shadow-2xl border-2 border-amber-500 relative space-y-3">
         <button onclick="closeUndoModals()" class="absolute top-3 right-3 text-gray-400 hover:text-gray-600">
@@ -307,7 +350,7 @@
       </div>
     </div>
 
-    <!-- 7. MODAL PASO 2 SEGURIDAD DEFINITIVA REVERSIÓN ADMIN -->
+    <!-- 8. MODAL PASO 2 SEGURIDAD DEFINITIVA REVERSIÓN ADMIN -->
     <div id="undo-step2-modal" class="fixed inset-0 bg-black/80 backdrop-blur-md z-50 flex items-center justify-center p-4 hidden">
       <div class="bg-white rounded-2xl p-5 w-full max-w-xs shadow-2xl border-2 border-red-600 relative space-y-3">
         <button onclick="closeUndoModals()" class="absolute top-3 right-3 text-gray-400 hover:text-gray-600">
@@ -339,7 +382,7 @@
       </div>
     </div>
 
-    <!-- 8. MODAL INFORME 1: ASISTENCIA E INGRESO DE INVITADOS -->
+    <!-- 9. MODAL INFORME 1: ASISTENCIA -->
     <div id="attendance-report-modal" class="fixed inset-0 bg-black/70 backdrop-blur-sm z-50 flex items-center justify-center p-3 hidden">
       <div class="bg-white rounded-2xl w-full max-w-sm max-h-[85vh] flex flex-col shadow-2xl border-2 border-zolimar-gold relative">
         <header class="bg-zolimar-royalBlue text-white p-4 rounded-t-2xl flex items-center justify-between">
@@ -356,7 +399,6 @@
         </header>
 
         <div class="p-3 bg-gray-50 border-b space-y-2">
-          <!-- Resumen de Contadores -->
           <div class="grid grid-cols-3 gap-2 text-center">
             <div class="bg-white p-2 rounded-xl border shadow-sm">
               <span class="text-[9px] text-gray-500 uppercase font-bold block">Total</span>
@@ -372,7 +414,6 @@
             </div>
           </div>
 
-          <!-- Barra de Porcentaje -->
           <div>
             <div class="flex justify-between text-[10px] font-bold text-gray-600 mb-1">
               <span>Porcentaje de Asistencia:</span>
@@ -383,14 +424,12 @@
             </div>
           </div>
 
-          <!-- Filtros de Asistencia -->
           <div class="flex justify-center space-x-1 pt-1">
             <button onclick="filterAttReport('all')" id="att-filter-all" class="px-2.5 py-1 rounded-lg text-[10px] font-bold bg-zolimar-royalBlue text-zolimar-gold">Todos</button>
             <button onclick="filterAttReport('entered')" id="att-filter-entered" class="px-2.5 py-1 rounded-lg text-[10px] font-bold bg-white text-gray-600 border">Ingresaron</button>
             <button onclick="filterAttReport('pending')" id="att-filter-pending" class="px-2.5 py-1 rounded-lg text-[10px] font-bold bg-white text-gray-600 border">Faltan</button>
           </div>
 
-          <!-- Buscador dentro del informe -->
           <div class="relative pt-1">
             <i data-lucide="search" class="w-3.5 h-3.5 absolute left-3 top-3 text-gray-400"></i>
             <input id="att-search-input" type="text" placeholder="Buscar invitado o mesa..." 
@@ -411,7 +450,7 @@
       </div>
     </div>
 
-    <!-- 9. MODAL INFORME 2: ENTREGA DE COMIDA Y BEBIDAS -->
+    <!-- 10. MODAL INFORME 2: COMIDA & BEBIDAS -->
     <div id="food-drink-report-modal" class="fixed inset-0 bg-black/70 backdrop-blur-sm z-50 flex items-center justify-center p-3 hidden">
       <div class="bg-white rounded-2xl w-full max-w-sm max-h-[85vh] flex flex-col shadow-2xl border-2 border-zolimar-royalBlue relative">
         <header class="bg-zolimar-royalBlue text-white p-4 rounded-t-2xl flex items-center justify-between">
@@ -428,7 +467,6 @@
         </header>
 
         <div class="p-3 bg-gray-50 border-b space-y-2">
-          <!-- Resumen de Contadores -->
           <div class="grid grid-cols-3 gap-2 text-center">
             <div class="bg-emerald-50 p-2 rounded-xl border border-emerald-200 shadow-sm">
               <span class="text-[9px] text-emerald-800 uppercase font-bold block">🍲 Comida</span>
@@ -471,7 +509,7 @@
       </div>
     </div>
 
-    <!-- 10. MODAL DE CONTROL INDIVIDUAL DE INVITADO -->
+    <!-- 11. MODAL DE CONTROL INDIVIDUAL DE INVITADO -->
     <div id="guest-service-modal" class="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
       <div class="bg-white rounded-2xl p-5 w-full max-w-xs shadow-2xl border-2 border-zolimar-royalBlue relative space-y-4">
         <button onclick="closeGuestServiceModal()" class="absolute top-3 right-3 text-gray-400 hover:text-gray-600">
@@ -534,7 +572,7 @@
       </div>
     </div>
 
-    <!-- 11. MODAL PARA AGREGAR INVITADO MANUALMENTE -->
+    <!-- 12. MODAL PARA AGREGAR INVITADO MANUALMENTE -->
     <div id="add-guest-modal" class="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
       <div class="bg-white rounded-2xl p-5 w-full max-w-xs shadow-2xl border border-zolimar-royalBlue relative">
         <button onclick="closeAddGuestModal()" class="absolute top-3 right-3 text-gray-400 hover:text-gray-600">
@@ -583,7 +621,7 @@
       </div>
     </div>
 
-    <!-- 12. MODAL DE PERSONALIZACIÓN DE NOMBRE E IMAGEN DEL EVENTO -->
+    <!-- 13. MODAL DE PERSONALIZACIÓN DE NOMBRE E IMAGEN DEL EVENTO -->
     <div id="event-banner-modal" class="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
       <div class="bg-white rounded-2xl p-5 w-full max-w-sm shadow-2xl border-2 border-zolimar-gold relative space-y-4">
         <button onclick="closeEventBannerModal()" class="absolute top-3 right-3 text-gray-400 hover:text-gray-600">
@@ -629,7 +667,7 @@
       </div>
     </div>
 
-    <!-- 13. MODAL DE CORRECCIÓN DE PEDIDO / SERVICIO PARA EL MESERO -->
+    <!-- 14. MODAL DE CORRECCIÓN DE PEDIDO / SERVICIO PARA EL MESERO -->
     <div id="order-edit-modal" class="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
       <div class="bg-white rounded-2xl p-5 w-full max-w-sm shadow-2xl border-2 border-zolimar-royalBlue relative space-y-4">
         <button onclick="closeOrderEditModal()" class="absolute top-3 right-3 text-gray-400 hover:text-gray-600">
@@ -678,7 +716,6 @@
             </div>
           </div>
 
-          <!-- PIN DE AUTORIZACIÓN (REQUERIDO SI YA FUE ENTREGADO Y ES MESERO) -->
           <div id="oem-pin-container" class="hidden bg-amber-50 p-2.5 rounded-xl border border-amber-300">
             <label class="text-[10px] font-bold text-amber-900 uppercase block mb-1">🔑 Clave / PIN de Autorización (Default: 1234):</label>
             <input id="oem-pin-input" type="password" placeholder="Ingrese PIN (ej. 1234)" class="w-full text-xs p-1.5 border border-amber-400 rounded-lg outline-none bg-white text-center font-bold">
@@ -694,7 +731,7 @@
       </div>
     </div>
 
-    <!-- HEADER SUPERIOR PRINCIPAL (AZUL REALEZA CON DETALLES DORADOS) -->
+    <!-- HEADER SUPERIOR PRINCIPAL (AZUL REALEZA CON BOTÓN "COMIDAS Y BEBIDAS" Y AJUSTE DE MESAS) -->
     <header class="bg-zolimar-royalDark text-white px-4 pt-3 pb-2 border-b border-zolimar-gold/30 shadow-md relative">
       <div class="flex justify-between items-center mb-1.5">
         <!-- MARCA ZOLIMAR -->
@@ -729,15 +766,19 @@
         </div>
       </div>
 
-      <!-- BOTONES DE INFORMES SOLICITADOS -->
-      <div class="flex space-x-2 pt-1 pb-1">
-        <button onclick="openAttendanceReportModal()" class="flex-1 bg-zolimar-royalBlue text-zolimar-gold border border-zolimar-gold/40 text-[10px] font-bold py-1.5 rounded-lg flex items-center justify-center space-x-1 hover:bg-zolimar-royalMid transition shadow">
+      <!-- BOTONES SUPERIORES: INFORMES Y BOTÓN SOLICITADO "COMIDAS Y BEBIDAS" -->
+      <div class="grid grid-cols-3 gap-1.5 sm:gap-2 pt-1 pb-1">
+        <button onclick="openAttendanceReportModal()" class="bg-zolimar-royalBlue text-zolimar-gold border border-zolimar-gold/40 text-[10px] font-bold py-1.5 px-2 rounded-lg flex items-center justify-center space-x-1 hover:bg-zolimar-royalMid transition shadow">
           <i data-lucide="clipboard-list" class="w-3.5 h-3.5"></i>
-          <span>Informe Asistencia</span>
+          <span class="truncate">Inf. Asistencia</span>
         </button>
-        <button onclick="openFoodDrinkReportModal()" class="flex-1 bg-zolimar-royalBlue text-zolimar-gold border border-zolimar-gold/40 text-[10px] font-bold py-1.5 rounded-lg flex items-center justify-center space-x-1 hover:bg-zolimar-royalMid transition shadow">
+        <button onclick="openFoodDrinkReportModal()" class="bg-zolimar-royalBlue text-zolimar-gold border border-zolimar-gold/40 text-[10px] font-bold py-1.5 px-2 rounded-lg flex items-center justify-center space-x-1 hover:bg-zolimar-royalMid transition shadow">
           <i data-lucide="utensils" class="w-3.5 h-3.5"></i>
-          <span>Informe Comida & Bebidas</span>
+          <span class="truncate">Inf. Entrega</span>
+        </button>
+        <button onclick="openMenuCatalogModal()" title="Ingresar o modificar platos y bebidas que se servirán" class="bg-gradient-to-r from-zolimar-gold to-amber-400 text-zolimar-royalDark font-extrabold text-[10px] py-1.5 px-2 rounded-lg flex items-center justify-center space-x-1 shadow-md hover:brightness-110 active:scale-95 transition border border-yellow-200">
+          <i data-lucide="utensils-crossed" class="w-3.5 h-3.5"></i>
+          <span class="truncate">🍽️ Comidas y Bebidas</span>
         </button>
       </div>
     </header>
@@ -748,37 +789,30 @@
       <!-- BARRA DE GESTIÓN Y BÚSQUEDA -->
       <div class="bg-gradient-to-r from-zolimar-royalBlue to-zolimar-royalDark px-4 py-2.5 text-white shadow-md space-y-2">
         
-        <!-- PANEL DE CONTROL DINÁMICO DE MESAS Y ASISTENTES (SOLO ADMIN) -->
-        <div id="admin-table-controls-bar" class="hidden flex flex-wrap items-center justify-between gap-2 bg-black/25 p-2 rounded-xl border border-zolimar-gold/30">
-          <div class="flex items-center space-x-2 text-xs font-bold">
-            <span class="text-zolimar-gold flex items-center space-x-1">
-              <i data-lucide="layout-grid" class="w-4 h-4"></i>
-              <span>Mesas:</span>
-              <span id="dash-total-tables-badge" class="bg-zolimar-gold text-zolimar-royalDark px-2 py-0.5 rounded-full font-extrabold text-[11px]">20</span>
-            </span>
-            <span class="text-blue-200">|</span>
-            <span class="text-blue-100 flex items-center space-x-1">
-              <i data-lucide="users" class="w-4 h-4 text-blue-300"></i>
-              <span>Comensales:</span>
-              <span id="dash-total-guests-badge" class="bg-blue-600 text-white px-2 py-0.5 rounded-full font-extrabold text-[11px]">0</span>
-            </span>
+        <!-- PANEL DE CONTROL DINÁMICO DE MESAS (BOTONES PARA AUMENTAR O QUITAR MESAS) -->
+        <div id="admin-table-controls-bar" class="flex flex-wrap items-center justify-between gap-2 bg-black/25 p-2 rounded-xl border border-zolimar-gold/30">
+          
+          <!-- CONTROLES DIRECTOS DE AUMENTAR Y QUITAR MESAS -->
+          <div class="flex items-center space-x-1.5 bg-white/10 px-2 py-1 rounded-lg border border-white/20">
+            <span class="text-[10px] font-bold text-zolimar-gold mr-1">Mesas:</span>
+            <button onclick="removeTable()" title="Quitar 1 mesa" class="bg-red-600 hover:bg-red-700 text-white font-black w-6 h-6 rounded-md flex items-center justify-center text-xs shadow active:scale-90 transition">
+              -
+            </button>
+            <button onclick="openManageTablesModal()" title="Ver o ajustar total de mesas" class="bg-zolimar-gold text-zolimar-royalDark px-2.5 py-0.5 rounded-md font-extrabold text-xs hover:bg-zolimar-goldLight transition">
+              <span id="dash-total-tables-badge">20</span> Mesas ⚙️
+            </button>
+            <button onclick="addTable()" title="Aumentar 1 mesa" class="bg-emerald-600 hover:bg-emerald-700 text-white font-black w-6 h-6 rounded-md flex items-center justify-center text-xs shadow active:scale-90 transition">
+              +
+            </button>
           </div>
 
-          <!-- BOTONES DE ACCIÓN RÁPIDA DE ADMINISTRADOR -->
           <div class="flex items-center space-x-1.5">
-            <button onclick="addTable()" title="Agregar una nueva mesa al evento" class="bg-emerald-600 hover:bg-emerald-700 text-white font-bold px-2.5 py-1 rounded-lg text-[10px] flex items-center space-x-1 transition shadow active:scale-95">
-              <i data-lucide="plus-circle" class="w-3.5 h-3.5"></i>
-              <span>+ Mesa</span>
+            <span class="text-[10px] text-blue-200 font-bold hidden sm:inline">👥 <span id="dash-total-guests-badge">0</span> Comensales</span>
+            <button onclick="openMenuCatalogModal()" title="Ingresar qué se servirá" class="bg-zolimar-gold hover:bg-zolimar-goldLight text-zolimar-royalDark font-extrabold px-2.5 py-1 rounded-lg text-[10px] flex items-center space-x-1 transition shadow active:scale-95">
+              <i data-lucide="utensils-crossed" class="w-3.5 h-3.5"></i>
+              <span>Comidas & Bebidas</span>
             </button>
-            <button onclick="removeTable()" title="Quitar la última mesa sin comensales" class="bg-red-700 hover:bg-red-800 text-white font-bold px-2.5 py-1 rounded-lg text-[10px] flex items-center space-x-1 transition shadow active:scale-95">
-              <i data-lucide="minus-circle" class="w-3.5 h-3.5"></i>
-              <span>- Mesa</span>
-            </button>
-            <button onclick="openMenuCatalogModal()" title="Administrar catálogo de platos y bebidas" class="bg-zolimar-gold hover:bg-zolimar-goldLight text-zolimar-royalDark font-extrabold px-2.5 py-1 rounded-lg text-[10px] flex items-center space-x-1 transition shadow active:scale-95">
-              <i data-lucide="book-open" class="w-3.5 h-3.5"></i>
-              <span>Menú/Carta</span>
-            </button>
-            <button onclick="openUploadExcelModal()" title="Cargar archivo Excel de invitados" class="bg-blue-600 hover:bg-blue-700 text-white font-bold px-2 py-1 rounded-lg text-[10px] flex items-center space-x-1 transition shadow">
+            <button onclick="openUploadExcelModal()" title="Cargar archivo Excel de invitados" class="bg-blue-600 hover:bg-blue-700 text-white font-bold px-2.5 py-1 rounded-lg text-[10px] flex items-center space-x-1 transition shadow">
               <i data-lucide="file-spreadsheet" class="w-3.5 h-3.5"></i>
               <span>Excel</span>
             </button>
@@ -822,13 +856,19 @@
           <h2 id="detail-table-title" class="font-extrabold text-zolimar-royalBlue text-sm sm:text-base">Mesa 1</h2>
           <span id="detail-table-badge" class="text-[10px] bg-amber-100 text-amber-900 font-bold px-2 py-0.5 rounded-full">0/10 Servidos</span>
         </div>
-        <!-- Navegación Rápida entre Mesas -->
-        <div class="flex items-center space-x-1">
-          <button onclick="changeSelectedTable(-1)" title="Mesa Anterior" class="p-1.5 rounded-lg bg-gray-100 text-gray-700 hover:bg-gray-200">
-            <i data-lucide="chevron-left" class="w-4 h-4"></i>
-          </button>
-          <button onclick="changeSelectedTable(1)" title="Mesa Siguiente" class="p-1.5 rounded-lg bg-gray-100 text-gray-700 hover:bg-gray-200">
-            <i data-lucide="chevron-right" class="w-4 h-4"></i>
+        <!-- Navegación Rápida entre Mesas y Botones de Aumentar / Quitar Mesa -->
+        <div class="flex items-center space-x-1.5">
+          <div class="flex items-center space-x-1">
+            <button onclick="changeSelectedTable(-1)" title="Mesa Anterior" class="p-1.5 rounded-lg bg-gray-100 text-gray-700 hover:bg-gray-200">
+              <i data-lucide="chevron-left" class="w-4 h-4"></i>
+            </button>
+            <button onclick="changeSelectedTable(1)" title="Mesa Siguiente" class="p-1.5 rounded-lg bg-gray-100 text-gray-700 hover:bg-gray-200">
+              <i data-lucide="chevron-right" class="w-4 h-4"></i>
+            </button>
+          </div>
+          <button onclick="addTable()" title="Aumentar una nueva mesa" class="bg-emerald-600 text-white font-bold px-2 py-1.5 rounded-lg text-xs hover:bg-emerald-700 transition shadow flex items-center space-x-1">
+            <i data-lucide="plus" class="w-3.5 h-3.5"></i>
+            <span class="hidden sm:inline">Mesa</span>
           </button>
         </div>
       </header>
@@ -877,7 +917,6 @@
 
           <!-- Mesa Circular con Radio Táctil Dinámico -->
           <div class="relative w-72 h-72 sm:w-84 sm:h-84 md:w-96 md:h-96 flex items-center justify-center my-2 select-none z-10">
-            <!-- Centro de la Mesa -->
             <div class="w-32 h-32 sm:w-36 sm:h-36 md:w-40 md:h-40 rounded-full bg-gradient-to-br from-zolimar-royalDark to-zolimar-royalBlue border-4 border-zolimar-gold flex items-center justify-center shadow-2xl z-20 text-center text-white p-2">
               <div>
                 <i data-lucide="crown" class="w-5 h-5 sm:w-6 sm:h-6 text-zolimar-gold mx-auto"></i>
@@ -885,7 +924,6 @@
                 <div id="detail-center-progress-text" class="text-[9px] sm:text-[10px] text-blue-200 font-semibold">0/10 Servidos</div>
               </div>
             </div>
-            <!-- Contenedor de Sillas Dinámicas con Íconos Táctiles -->
             <div id="detail-chairs-container" class="absolute inset-0 z-20"></div>
           </div>
 
@@ -894,67 +932,79 @@
           </p>
         </div>
 
-        <!-- COLUMNA DERECHA: GESTIÓN DEL MENÚ Y SERVICIOS -->
+        <!-- COLUMNA DERECHA: ENTRADA DIRECTA DE COMIDAS Y BEBIDAS QUE SE SERVIRÁN -->
         <div id="admin-service-catalog-panel" class="md:col-span-5 flex flex-col space-y-3 p-3 md:p-0">
           
-          <div class="bg-gradient-to-r from-zolimar-royalBlue to-zolimar-royalDark text-white px-3 py-2 rounded-xl shadow flex items-center justify-between text-xs font-bold border border-zolimar-gold/30">
-            <span class="flex items-center space-x-1.5">
-              <i data-lucide="shield-check" class="w-4 h-4 text-zolimar-gold"></i>
-              <span>ESTADO GENERAL Y CARTA DEL EVENTO</span>
+          <div class="bg-gradient-to-r from-zolimar-royalBlue to-zolimar-royalDark text-white px-3.5 py-2.5 rounded-2xl shadow flex items-center justify-between border border-zolimar-gold/40">
+            <span class="flex items-center space-x-1.5 font-extrabold text-xs text-zolimar-gold">
+              <i data-lucide="utensils-crossed" class="w-4 h-4"></i>
+              <span>COMIDAS Y BEBIDAS A SERVIR</span>
             </span>
-            <button id="admin-catalog-btn-shortcut" onclick="openMenuCatalogModal()" class="text-[9px] bg-zolimar-gold text-zolimar-royalDark px-2 py-0.5 rounded-full font-bold hover:bg-zolimar-goldLight transition">
-              ✏️ Gestionar Carta
+            <button onclick="openMenuCatalogModal()" title="Abrir Administrador Completo de Menú" class="text-[10px] bg-zolimar-gold hover:bg-zolimar-goldLight text-zolimar-royalDark font-extrabold px-2.5 py-1 rounded-lg transition shadow">
+              ⚙️ Gestionar Carta
             </button>
           </div>
           
-          <!-- TARJETA 1: SERVICIO Y CATÁLOGO DE COMIDA DEL DÍA -->
-          <div class="p-3.5 bg-white rounded-2xl border border-blue-100 shadow-sm space-y-2.5">
+          <!-- SECCIÓN 1: INGRESO MANUAL DE PLATOS Y COMIDA -->
+          <div class="p-3.5 bg-white rounded-2xl border border-emerald-200 shadow-sm space-y-2.5">
             <div class="flex items-center justify-between border-b border-gray-100 pb-2">
               <div class="flex items-center space-x-2">
                 <div class="w-7 h-7 bg-emerald-600 text-white rounded-lg flex items-center justify-center shadow">
                   <i data-lucide="utensils" class="w-4 h-4"></i>
                 </div>
                 <div>
-                  <h3 class="text-xs font-bold text-gray-900">Catálogo de Comida del Día</h3>
-                  <p class="text-[9px] text-gray-500">Platos disponibles para este evento</p>
+                  <h3 class="text-xs font-bold text-gray-900">🍲 Platos / Menús del Día</h3>
+                  <p class="text-[9px] text-gray-500">Escribe aquí los platos que se servirán</p>
                 </div>
               </div>
-              <div class="flex items-center space-x-1.5">
-                <span id="food-admin-badge" class="hidden text-[9px] bg-blue-100 text-zolimar-royalBlue border border-blue-200 px-1.5 py-0.5 rounded-full font-bold">🔒 Admin</span>
-                <input id="food-toggle" type="checkbox" onchange="updateTableToggles()" title="Activar/Desactivar Servicio de Comida" class="w-5 h-5 accent-emerald-600 cursor-pointer">
-              </div>
+              <input id="food-toggle" type="checkbox" onchange="updateTableToggles()" title="Activar/Desactivar Servicio de Comida en Mesa" class="w-5 h-5 accent-emerald-600 cursor-pointer">
             </div>
 
-            <!-- Lista de Platos Activos del Día -->
+            <!-- Entrada rápida para escribir y agregar plato -->
+            <div class="flex space-x-1.5">
+              <input id="direct-food-input" type="text" placeholder="Escribe plato (ej. Lomo Saltado Gourmet...)" onkeydown="if(event.key==='Enter') addDirectFoodItem()" class="flex-1 text-xs p-2 border border-emerald-300 rounded-xl focus:ring-2 focus:ring-emerald-500 outline-none bg-emerald-50/20 font-semibold text-gray-800">
+              <button onclick="addDirectFoodItem()" class="bg-emerald-600 hover:bg-emerald-700 text-white font-bold px-3 py-2 rounded-xl text-xs transition shadow flex items-center space-x-1 active:scale-95">
+                <i data-lucide="plus" class="w-3.5 h-3.5"></i>
+                <span>Agregar</span>
+              </button>
+            </div>
+
+            <!-- Lista de Platos Activos con botón (x) para eliminar y editar -->
             <div>
-              <span class="text-[9px] font-bold text-gray-600 uppercase block mb-1">Opciones Disponibles:</span>
+              <span class="text-[9px] font-bold text-gray-600 uppercase block mb-1">Platos Configurados:</span>
               <div id="food-catalog-pills" class="flex flex-wrap gap-1.5 min-h-[32px]">
                 <!-- Se puebla dinámicamente -->
               </div>
             </div>
           </div>
 
-          <!-- TARJETA 2: SERVICIO Y CATÁLOGO DE BEBIDAS Y LICORES DEL DÍA -->
-          <div class="p-3.5 bg-white rounded-2xl border border-blue-100 shadow-sm space-y-2.5">
+          <!-- SECCIÓN 2: INGRESO MANUAL DE BEBIDAS Y LICORES -->
+          <div class="p-3.5 bg-white rounded-2xl border border-blue-200 shadow-sm space-y-2.5">
             <div class="flex items-center justify-between border-b border-gray-100 pb-2">
               <div class="flex items-center space-x-2">
                 <div class="w-7 h-7 bg-zolimar-royalBlue text-white rounded-lg flex items-center justify-center shadow">
                   <i data-lucide="wine" class="w-4 h-4"></i>
                 </div>
                 <div>
-                  <h3 class="text-xs font-bold text-gray-900">Catálogo de Bebidas & Licores</h3>
-                  <p class="text-[9px] text-gray-500">Licores y bebidas disponibles</p>
+                  <h3 class="text-xs font-bold text-gray-900">🥤 Bebidas & Licores del Día</h3>
+                  <p class="text-[9px] text-gray-500">Escribe aquí las bebidas y licores a servir</p>
                 </div>
               </div>
-              <div class="flex items-center space-x-1.5">
-                <span id="drink-admin-badge" class="hidden text-[9px] bg-blue-100 text-zolimar-royalBlue border border-blue-200 px-1.5 py-0.5 rounded-full font-bold">🔒 Admin</span>
-                <input id="drink-toggle" type="checkbox" onchange="updateTableToggles()" title="Activar/Desactivar Servicio de Bebidas" class="w-5 h-5 accent-blue-600 cursor-pointer">
-              </div>
+              <input id="drink-toggle" type="checkbox" onchange="updateTableToggles()" title="Activar/Desactivar Servicio de Bebidas en Mesa" class="w-5 h-5 accent-blue-600 cursor-pointer">
             </div>
 
-            <!-- Lista de Bebidas Activas del Día -->
+            <!-- Entrada rápida para escribir y agregar bebida -->
+            <div class="flex space-x-1.5">
+              <input id="direct-drink-input" type="text" placeholder="Escribe bebida (ej. Pisco Sour, Vino Tinto...)" onkeydown="if(event.key==='Enter') addDirectDrinkItem()" class="flex-1 text-xs p-2 border border-blue-300 rounded-xl focus:ring-2 focus:ring-zolimar-blueBright outline-none bg-blue-50/20 font-semibold text-gray-800">
+              <button onclick="addDirectDrinkItem()" class="bg-zolimar-royalBlue hover:bg-zolimar-royalDark text-zolimar-gold font-bold px-3 py-2 rounded-xl text-xs transition shadow flex items-center space-x-1 active:scale-95">
+                <i data-lucide="plus" class="w-3.5 h-3.5"></i>
+                <span>Agregar</span>
+              </button>
+            </div>
+
+            <!-- Lista de Bebidas Activas con botón (x) para eliminar y editar -->
             <div>
-              <span class="text-[9px] font-bold text-gray-600 uppercase block mb-1">Opciones Disponibles:</span>
+              <span class="text-[9px] font-bold text-gray-600 uppercase block mb-1">Bebidas Configuradas:</span>
               <div id="drink-catalog-pills" class="flex flex-wrap gap-1.5 min-h-[32px]">
                 <!-- Se puebla dinámicamente -->
               </div>
@@ -1111,10 +1161,22 @@
       renderGuestsTable();
     }
 
-    /* GESTIÓN DINÁMICA DE MESAS (AUMENTAR / DISMINUIR) */
+    /* GESTIÓN DINÁMICA DE MESAS (AUMENTAR / DISMINUIR / AJUSTAR) */
+    function openManageTablesModal() {
+      const total = eventData.tables ? eventData.tables.length : 20;
+      document.getElementById('modal-table-count-display').innerText = total;
+      document.getElementById('exact-tables-input').value = total;
+      document.getElementById('manage-tables-modal').classList.remove('hidden');
+      if (window.lucide) lucide.createIcons();
+    }
+
+    function closeManageTablesModal() {
+      document.getElementById('manage-tables-modal').classList.add('hidden');
+    }
+
     async function addTable() {
-      if (!authToken || (currentUser && currentUser.role !== 'ADMIN')) {
-        showToast('Acceso denegado: Solo administradores');
+      if (!authToken) {
+        showToast('Inicia sesión para gestionar mesas');
         return;
       }
       try {
@@ -1124,7 +1186,7 @@
         });
         const data = await res.json();
         if (!res.ok) throw new Error(data.error);
-        showToast(data.message || 'Mesa agregada');
+        showToast(data.message || 'Mesa agregada con éxito');
         fetchEventData();
       } catch (err) {
         alert(err.message);
@@ -1132,8 +1194,8 @@
     }
 
     async function removeTable() {
-      if (!authToken || (currentUser && currentUser.role !== 'ADMIN')) {
-        showToast('Acceso denegado: Solo administradores');
+      if (!authToken) {
+        showToast('Inicia sesión para gestionar mesas');
         return;
       }
       const totalTables = eventData.tables.length;
@@ -1153,7 +1215,189 @@
         });
         const data = await res.json();
         if (!res.ok) throw new Error(data.error);
-        showToast(data.message || 'Mesa eliminada');
+        showToast(data.message || 'Mesa eliminada con éxito');
+        fetchEventData();
+      } catch (err) {
+        alert(err.message);
+      }
+    }
+
+    async function applyExactTableCount() {
+      const input = document.getElementById('exact-tables-input');
+      const count = parseInt(input.value);
+      if (!count || count < 1 || count > 100) {
+        alert('Ingresa una cantidad válida entre 1 y 100.');
+        return;
+      }
+
+      try {
+        const res = await fetch('/api/admin/tables/set-count', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${authToken}` },
+          body: JSON.stringify({ count })
+        });
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.error);
+        showToast(data.message || 'Cantidad de mesas actualizada');
+        closeManageTablesModal();
+        fetchEventData();
+      } catch (err) {
+        alert(err.message);
+      }
+    }
+
+    /* INGRESO RÁPIDO DIRECTO DE PLATOS Y BEBIDAS */
+    async function addDirectFoodItem() {
+      const input = document.getElementById('direct-food-input');
+      const name = input.value.trim();
+      if (!name) {
+        alert('Escribe el nombre del plato a servir.');
+        return;
+      }
+      await saveCatalogOption('food', name);
+      input.value = '';
+    }
+
+    async function addDirectDrinkItem() {
+      const input = document.getElementById('direct-drink-input');
+      const name = input.value.trim();
+      if (!name) {
+        alert('Escribe el nombre de la bebida o licor.');
+        return;
+      }
+      await saveCatalogOption('drink', name);
+      input.value = '';
+    }
+
+    async function saveCatalogOption(category, name) {
+      try {
+        const res = await fetch('/api/admin/menu-catalog/add', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${authToken}` },
+          body: JSON.stringify({ category, name })
+        });
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.error);
+        showToast(`${category === 'food' ? 'Plato' : 'Bebida'} '${name}' agregado a la carta`);
+        fetchEventData();
+      } catch (err) {
+        alert(err.message);
+      }
+    }
+
+    /* MODAL DE CARTA / MENÚ (PLATOS Y BEBIDAS) */
+    function openMenuCatalogModal() {
+      switchCatalogTab('food');
+      document.getElementById('menu-catalog-modal').classList.remove('hidden');
+      if (window.lucide) lucide.createIcons();
+    }
+
+    function closeMenuCatalogModal() {
+      document.getElementById('menu-catalog-modal').classList.add('hidden');
+    }
+
+    function switchCatalogTab(category) {
+      currentCatalogCategory = category;
+      const tabFood = document.getElementById('catalog-tab-food');
+      const tabDrink = document.getElementById('catalog-tab-drink');
+      const label = document.getElementById('catalog-input-label');
+      const input = document.getElementById('catalog-new-name-input');
+
+      if (category === 'food') {
+        tabFood.className = 'flex-1 py-2.5 text-center border-b-2 border-zolimar-royalBlue text-zolimar-royalBlue bg-white font-bold flex items-center justify-center space-x-1.5';
+        tabDrink.className = 'flex-1 py-2.5 text-center text-gray-500 hover:text-zolimar-royalBlue font-bold flex items-center justify-center space-x-1.5';
+        label.innerText = '+ Ingresar Plato Manualmente:';
+        input.placeholder = 'Ej. Lomo Saltado Gourmet, Pollo a la Brasa...';
+      } else {
+        tabDrink.className = 'flex-1 py-2.5 text-center border-b-2 border-zolimar-royalBlue text-zolimar-royalBlue bg-white font-bold flex items-center justify-center space-x-1.5';
+        tabFood.className = 'flex-1 py-2.5 text-center text-gray-500 hover:text-zolimar-royalBlue font-bold flex items-center justify-center space-x-1.5';
+        label.innerText = '+ Ingresar Bebida / Licor Manualmente:';
+        input.placeholder = 'Ej. Pisco Sour Catedral, Vino Tinto Malbec...';
+      }
+
+      renderCatalogItemsList();
+    }
+
+    function renderCatalogItemsList() {
+      const container = document.getElementById('catalog-items-list');
+      if (!container) return;
+      container.innerHTML = '';
+
+      const items = (eventData.menuCatalog || []).filter(item => item.category === currentCatalogCategory);
+
+      if (items.length === 0) {
+        container.innerHTML = `<div class="text-center py-6 text-gray-400 text-xs font-medium">No hay ítems registrados en esta categoría. Escribe arriba para agregar el primero.</div>`;
+        return;
+      }
+
+      items.forEach(item => {
+        const div = document.createElement('div');
+        div.className = 'p-2.5 rounded-xl border border-gray-200 bg-white flex items-center justify-between shadow-sm hover:border-blue-300 transition';
+        div.innerHTML = `
+          <div class="flex items-center space-x-2">
+            <span class="text-base">${item.category === 'food' ? '🍲' : '🥤'}</span>
+            <span class="font-bold text-xs text-gray-800">${escapeHtml(item.name)}</span>
+          </div>
+          <div class="flex items-center space-x-1">
+            <button onclick="editCatalogItemPrompt(${item.id}, '${escapeHtml(item.name)}', '${item.category}')" title="Editar Nombre" class="text-blue-600 hover:text-blue-800 p-1.5 rounded-lg hover:bg-blue-50">
+              <i data-lucide="edit" class="w-3.5 h-3.5"></i>
+            </button>
+            <button onclick="deleteCatalogItem(${item.id}, '${escapeHtml(item.name)}')" title="Eliminar de la Carta" class="text-red-500 hover:text-red-700 p-1.5 rounded-lg hover:bg-red-50">
+              <i data-lucide="trash-2" class="w-3.5 h-3.5"></i>
+            </button>
+          </div>
+        `;
+        container.appendChild(div);
+      });
+
+      if (window.lucide) lucide.createIcons();
+    }
+
+    async function submitNewCatalogItem() {
+      const input = document.getElementById('catalog-new-name-input');
+      const name = input.value.trim();
+      if (!name) {
+        alert('Escribe el nombre del plato o bebida.');
+        return;
+      }
+
+      await saveCatalogOption(currentCatalogCategory, name);
+      input.value = '';
+    }
+
+    async function editCatalogItemPrompt(id, currentName, category) {
+      const newName = prompt('Editar nombre en la carta:', currentName);
+      if (!newName || !newName.trim() || newName.trim() === currentName) return;
+
+      try {
+        const res = await fetch('/api/admin/menu-catalog/update', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${authToken}` },
+          body: JSON.stringify({ id, category, name: newName.trim() })
+        });
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.error);
+
+        showToast('Ítem actualizado en la carta');
+        fetchEventData();
+      } catch (err) {
+        alert(err.message);
+      }
+    }
+
+    async function deleteCatalogItem(id, name) {
+      if (!confirm(`¿Eliminar '${name}' de la carta?`)) return;
+
+      try {
+        const res = await fetch('/api/admin/menu-catalog/delete', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${authToken}` },
+          body: JSON.stringify({ id })
+        });
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.error);
+
+        showToast('Ítem eliminado de la carta');
         fetchEventData();
       } catch (err) {
         alert(err.message);
@@ -1264,142 +1508,6 @@
       }
     }
 
-    /* GESTIÓN DE CARTA / MENÚ (PLATOS Y BEBIDAS) */
-    function openMenuCatalogModal() {
-      if (!authToken || (currentUser && currentUser.role !== 'ADMIN')) {
-        showToast('Acceso exclusivo para Administradores');
-        return;
-      }
-      switchCatalogTab('food');
-      document.getElementById('menu-catalog-modal').classList.remove('hidden');
-      if (window.lucide) lucide.createIcons();
-    }
-
-    function closeMenuCatalogModal() {
-      document.getElementById('menu-catalog-modal').classList.add('hidden');
-    }
-
-    function switchCatalogTab(category) {
-      currentCatalogCategory = category;
-      const tabFood = document.getElementById('catalog-tab-food');
-      const tabDrink = document.getElementById('catalog-tab-drink');
-      const label = document.getElementById('catalog-input-label');
-      const input = document.getElementById('catalog-new-name-input');
-
-      if (category === 'food') {
-        tabFood.className = 'flex-1 py-2.5 text-center border-b-2 border-zolimar-royalBlue text-zolimar-royalBlue bg-white font-bold flex items-center justify-center space-x-1.5';
-        tabDrink.className = 'flex-1 py-2.5 text-center text-gray-500 hover:text-zolimar-royalBlue font-bold flex items-center justify-center space-x-1.5';
-        label.innerText = '+ Agregar Nuevo Plato:';
-        input.placeholder = 'Ej. Lomo Saltado Criollo...';
-      } else {
-        tabDrink.className = 'flex-1 py-2.5 text-center border-b-2 border-zolimar-royalBlue text-zolimar-royalBlue bg-white font-bold flex items-center justify-center space-x-1.5';
-        tabFood.className = 'flex-1 py-2.5 text-center text-gray-500 hover:text-zolimar-royalBlue font-bold flex items-center justify-center space-x-1.5';
-        label.innerText = '+ Agregar Nueva Bebida / Licor:';
-        input.placeholder = 'Ej. Pisco Sour Catedral...';
-      }
-
-      renderCatalogItemsList();
-    }
-
-    function renderCatalogItemsList() {
-      const container = document.getElementById('catalog-items-list');
-      if (!container) return;
-      container.innerHTML = '';
-
-      const items = (eventData.menuCatalog || []).filter(item => item.category === currentCatalogCategory);
-
-      if (items.length === 0) {
-        container.innerHTML = `<div class="text-center py-6 text-gray-400 text-xs">No hay ítems en esta categoría todavía. Agrega el primero arriba.</div>`;
-        return;
-      }
-
-      items.forEach(item => {
-        const div = document.createElement('div');
-        div.className = 'p-2.5 rounded-xl border border-gray-200 bg-white flex items-center justify-between shadow-sm hover:border-blue-300 transition';
-        div.innerHTML = `
-          <div class="flex items-center space-x-2">
-            <span class="text-base">${item.category === 'food' ? '🍲' : '🥤'}</span>
-            <span class="font-bold text-xs text-gray-800">${escapeHtml(item.name)}</span>
-          </div>
-          <div class="flex items-center space-x-1">
-            <button onclick="editCatalogItemPrompt(${item.id}, '${escapeHtml(item.name)}', '${item.category}')" title="Editar Nombre" class="text-blue-600 hover:text-blue-800 p-1 rounded hover:bg-blue-50">
-              <i data-lucide="edit" class="w-3.5 h-3.5"></i>
-            </button>
-            <button onclick="deleteCatalogItem(${item.id}, '${escapeHtml(item.name)}')" title="Eliminar de la Carta" class="text-red-500 hover:text-red-700 p-1 rounded hover:bg-red-50">
-              <i data-lucide="trash-2" class="w-3.5 h-3.5"></i>
-            </button>
-          </div>
-        `;
-        container.appendChild(div);
-      });
-
-      if (window.lucide) lucide.createIcons();
-    }
-
-    async function submitNewCatalogItem() {
-      const input = document.getElementById('catalog-new-name-input');
-      const name = input.value.trim();
-      if (!name) {
-        alert('Escribe el nombre del plato o bebida.');
-        return;
-      }
-
-      try {
-        const res = await fetch('/api/admin/menu-catalog/add', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${authToken}` },
-          body: JSON.stringify({ category: currentCatalogCategory, name: name })
-        });
-        const data = await res.json();
-        if (!res.ok) throw new Error(data.error);
-
-        input.value = '';
-        showToast(data.message || 'Ítem agregado a la carta');
-        fetchEventData();
-      } catch (err) {
-        alert(err.message);
-      }
-    }
-
-    async function editCatalogItemPrompt(id, currentName, category) {
-      const newName = prompt('Editar nombre en la carta:', currentName);
-      if (!newName || !newName.trim() || newName.trim() === currentName) return;
-
-      try {
-        const res = await fetch('/api/admin/menu-catalog/update', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${authToken}` },
-          body: JSON.stringify({ id, category, name: newName.trim() })
-        });
-        const data = await res.json();
-        if (!res.ok) throw new Error(data.error);
-
-        showToast(data.message || 'Ítem actualizado');
-        fetchEventData();
-      } catch (err) {
-        alert(err.message);
-      }
-    }
-
-    async function deleteCatalogItem(id, name) {
-      if (!confirm(`¿Eliminar '${name}' de la carta?`)) return;
-
-      try {
-        const res = await fetch('/api/admin/menu-catalog/delete', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${authToken}` },
-          body: JSON.stringify({ id })
-        });
-        const data = await res.json();
-        if (!res.ok) throw new Error(data.error);
-
-        showToast(data.message || 'Ítem eliminado');
-        fetchEventData();
-      } catch (err) {
-        alert(err.message);
-      }
-    }
-
     /* INFORME 1: ASISTENCIA */
     function openAttendanceReportModal() {
       attCurrentFilter = 'all';
@@ -1451,7 +1559,7 @@
       });
 
       if (filtered.length === 0) {
-        container.innerHTML = `<div class="text-center py-6 text-gray-400 text-xs">No se encontraron registros en la búsqueda</div>`;
+        container.innerHTML = `<div class="text-center py-6 text-gray-400 text-xs font-medium">No se encontraron registros en la búsqueda</div>`;
         return;
       }
 
@@ -1522,7 +1630,7 @@
       });
 
       if (filtered.length === 0) {
-        container.innerHTML = `<div class="text-center py-6 text-gray-400 text-xs">No se encontraron registros en la búsqueda</div>`;
+        container.innerHTML = `<div class="text-center py-6 text-gray-400 text-xs font-medium">No se encontraron registros en la búsqueda</div>`;
         return;
       }
 
@@ -1568,7 +1676,7 @@
       setTimeout(() => win.print(), 500);
     }
 
-    /* LÓGICA DE 2 PASOS DE SEGURIDAD PARA REVERSIÓN ADMIN */
+    /* SEGURIDAD DE REVERSIÓN ADMIN */
     function startUndoProcess() {
       document.getElementById('undo-check-1').checked = false;
       toggleUndoStep1Btn();
@@ -1627,7 +1735,7 @@
       }
     }
 
-    /* MODAL DE CORRECCIÓN DE PEDIDO (MESERO Y ADMIN) */
+    /* CORRECCIÓN DE PEDIDO (MESERO Y ADMIN) */
     function openOrderEditModal(guest) {
       if (!guest) return;
       document.getElementById('oem-seat-badge').innerText = `Mesa ${guest.table_id} - Silla ${guest.seat}`;
@@ -1715,7 +1823,7 @@
       }
     }
 
-    /* CONTROL INDIVIDUAL DE INVITADO (GUEST SERVICE MODAL) */
+    /* CONTROL INDIVIDUAL DE INVITADO */
     function openGuestServiceModal(guest, tableId, seatNum) {
       if (!guest) {
         selectedGuestForModal = {
@@ -2028,7 +2136,6 @@
       const isAdmin = currentUser.role === 'ADMIN';
       const adminPanel = document.getElementById('admin-panel');
       const adminTableControls = document.getElementById('admin-table-controls-bar');
-      const adminShortcut = document.getElementById('admin-catalog-btn-shortcut');
 
       if (adminPanel) {
         if (isAdmin) adminPanel.classList.remove('hidden');
@@ -2037,10 +2144,6 @@
       if (adminTableControls) {
         if (isAdmin) adminTableControls.classList.remove('hidden');
         else adminTableControls.classList.add('hidden');
-      }
-      if (adminShortcut) {
-        if (isAdmin) adminShortcut.classList.remove('hidden');
-        else adminShortcut.classList.add('hidden');
       }
 
       fetchEventData();
@@ -2196,10 +2299,12 @@
           }
         }
 
-        // Actualizar contadores del panel de control
+        const totalTables = (eventData.tables || []).length;
         const totalTablesBadge = document.getElementById('dash-total-tables-badge');
+        const modalTableCountDisplay = document.getElementById('modal-table-count-display');
         const totalGuestsBadge = document.getElementById('dash-total-guests-badge');
-        if (totalTablesBadge) totalTablesBadge.innerText = (eventData.tables || []).length;
+        if (totalTablesBadge) totalTablesBadge.innerText = totalTables;
+        if (modalTableCountDisplay) modalTableCountDisplay.innerText = totalTables;
         if (totalGuestsBadge) totalGuestsBadge.innerText = (eventData.guests || []).length;
 
         renderDashboard();
@@ -2417,13 +2522,10 @@
         const top = 50 + radiusPercent * Math.sin(angle);
 
         let circleColor = 'bg-red-500 text-white border-red-600 shadow-md';
-        let statusIcon = '🔴';
         if (seatState === 'served') {
           circleColor = 'bg-slate-600 text-white border-slate-700 shadow-md';
-          statusIcon = '🔘';
         } else if (seatState === 'progress') {
           circleColor = 'bg-amber-400 text-gray-900 border-amber-500 shadow-md';
-          statusIcon = '🟡';
         }
 
         const chairBtn = document.createElement('button');
@@ -2463,10 +2565,17 @@
         foodPills.innerHTML = '';
         const foods = (eventData.menuCatalog || []).filter(m => m.category === 'food');
         if (foods.length === 0) {
-          foodPills.innerHTML = '<span class="text-[10px] text-gray-400 italic">Menú Estándar, Vegetariano, Vegano</span>';
+          foodPills.innerHTML = '<span class="text-[10px] text-gray-400 italic">Escribe arriba para agregar platos a la carta</span>';
         } else {
           foods.forEach(f => {
-            foodPills.innerHTML += `<span class="bg-emerald-50 text-emerald-900 border border-emerald-300 text-[10px] font-bold px-2 py-0.5 rounded-full flex items-center space-x-1 shadow-xs"><span>🍲</span><span>${escapeHtml(f.name)}</span></span>`;
+            const span = document.createElement('span');
+            span.className = 'bg-emerald-50 text-emerald-950 border border-emerald-300 text-[10px] font-bold px-2 py-1 rounded-lg flex items-center space-x-1.5 shadow-xs group';
+            span.innerHTML = `
+              <span>🍲 ${escapeHtml(f.name)}</span>
+              <button onclick="editCatalogItemPrompt(${f.id}, '${escapeHtml(f.name)}', 'food')" title="Editar" class="text-emerald-700 hover:text-emerald-900 font-bold px-0.5">✏️</button>
+              <button onclick="deleteCatalogItem(${f.id}, '${escapeHtml(f.name)}')" title="Eliminar" class="text-red-500 hover:text-red-700 font-bold px-0.5">✕</button>
+            `;
+            foodPills.appendChild(span);
           });
         }
       }
@@ -2475,10 +2584,17 @@
         drinkPills.innerHTML = '';
         const drinks = (eventData.menuCatalog || []).filter(m => m.category === 'drink');
         if (drinks.length === 0) {
-          drinkPills.innerHTML = '<span class="text-[10px] text-gray-400 italic">Agua Mineral, Gaseosas, Vinos</span>';
+          drinkPills.innerHTML = '<span class="text-[10px] text-gray-400 italic">Escribe arriba para agregar bebidas o licores</span>';
         } else {
           drinks.forEach(d => {
-            drinkPills.innerHTML += `<span class="bg-blue-50 text-blue-900 border border-blue-300 text-[10px] font-bold px-2 py-0.5 rounded-full flex items-center space-x-1 shadow-xs"><span>🥤</span><span>${escapeHtml(d.name)}</span></span>`;
+            const span = document.createElement('span');
+            span.className = 'bg-blue-50 text-blue-950 border border-blue-300 text-[10px] font-bold px-2 py-1 rounded-lg flex items-center space-x-1.5 shadow-xs group';
+            span.innerHTML = `
+              <span>🥤 ${escapeHtml(d.name)}</span>
+              <button onclick="editCatalogItemPrompt(${d.id}, '${escapeHtml(d.name)}', 'drink')" title="Editar" class="text-blue-700 hover:text-blue-900 font-bold px-0.5">✏️</button>
+              <button onclick="deleteCatalogItem(${d.id}, '${escapeHtml(d.name)}')" title="Eliminar" class="text-red-500 hover:text-red-700 font-bold px-0.5">✕</button>
+            `;
+            drinkPills.appendChild(span);
           });
         }
       }
