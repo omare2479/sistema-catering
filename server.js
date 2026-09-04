@@ -288,11 +288,25 @@ app.post('/api/admin/menu-catalog/add', auth, (req, res) => {
   db.run(`INSERT INTO menu_catalog (category, name, is_active) VALUES (?, ?, 1)`, [cleanCategory, cleanName], function(err) {
     if (err) return res.status(500).json({ error: 'Error al guardar en catálogo: ' + err.message });
     io.emit('refresh-data');
-    res.json({ success: true, message: `Opción '${cleanName}' agregada al catálogo del día.`, id: this.lastID });
+    res.json({ success: true, message: `Opción '${cleanName}' agregada al catálogo.`, id: this.lastID });
   });
 });
 
-// 4.2 Administrador: Eliminar opción del catálogo del menú del día
+// 4.2 Administrador: Actualizar opción del catálogo
+app.post('/api/admin/menu-catalog/update', auth, (req, res) => {
+  if (req.user.role !== 'ADMIN') return res.status(403).json({ error: 'Solo los administradores pueden editar el catálogo.' });
+  const { id, category, name } = req.body;
+  if (!id || !name || !name.trim()) return res.status(400).json({ error: 'ID y Nombre requeridos.' });
+  const cleanCategory = category === 'drink' ? 'drink' : 'food';
+
+  db.run(`UPDATE menu_catalog SET category = ?, name = ? WHERE id = ?`, [cleanCategory, name.trim(), id], function(err) {
+    if (err) return res.status(500).json({ error: 'Error al actualizar catálogo: ' + err.message });
+    io.emit('refresh-data');
+    res.json({ success: true, message: 'Ítem de la carta actualizado con éxito.' });
+  });
+});
+
+// 4.3 Administrador: Eliminar opción del catálogo del menú del día
 app.post('/api/admin/menu-catalog/delete', auth, (req, res) => {
   if (req.user.role !== 'ADMIN') return res.status(403).json({ error: 'Solo los administradores pueden eliminar opciones del catálogo.' });
   const { id } = req.body;
@@ -302,6 +316,53 @@ app.post('/api/admin/menu-catalog/delete', auth, (req, res) => {
     if (err) return res.status(500).json({ error: 'Error al eliminar del catálogo.' });
     io.emit('refresh-data');
     res.json({ success: true, message: 'Opción eliminada del catálogo del día.' });
+  });
+});
+
+// 4.4 Administrador: Agregar nueva Mesa
+app.post('/api/admin/tables/add', auth, (req, res) => {
+  if (req.user.role !== 'ADMIN') return res.status(403).json({ error: 'Solo los administradores pueden gestionar mesas.' });
+  db.get(`SELECT MAX(id) as maxId FROM tables`, (err, row) => {
+    const nextId = (row && row.maxId ? row.maxId : 0) + 1;
+    db.run(
+      `INSERT INTO tables (id, service_status, food_service, drink_service, food_type, drink_type) VALUES (?, 'Pending', 1, 0, 'Menú Estándar', 'Agua & Gaseosa')`,
+      [nextId],
+      (insertErr) => {
+        if (insertErr) return res.status(500).json({ error: 'Error al crear mesa: ' + insertErr.message });
+        io.emit('refresh-data');
+        res.json({ success: true, message: `Mesa ${nextId} creada con éxito.`, tableId: nextId });
+      }
+    );
+  });
+});
+
+// 4.5 Administrador: Quitar/Eliminar última Mesa
+app.post('/api/admin/tables/remove', auth, (req, res) => {
+  if (req.user.role !== 'ADMIN') return res.status(403).json({ error: 'Solo los administradores pueden gestionar mesas.' });
+  const { tableId } = req.body;
+
+  const resolveTarget = (cb) => {
+    if (tableId) return cb(null, parseInt(tableId));
+    db.get(`SELECT MAX(id) as maxId FROM tables`, (err, row) => cb(err, row?.maxId));
+  };
+
+  resolveTarget((err, targetId) => {
+    if (err || !targetId) return res.status(400).json({ error: 'No se encontró una mesa para eliminar.' });
+    if (targetId <= 1) return res.status(400).json({ error: 'Debe existir al menos 1 mesa en el evento.' });
+
+    db.get(`SELECT COUNT(*) as count FROM guests WHERE table_id = ?`, [targetId], (countErr, countRow) => {
+      if (countRow && countRow.count > 0) {
+        return res.status(400).json({
+          error: `No se puede eliminar la Mesa ${targetId} porque tiene ${countRow.count} comensal(es) asignado(s). Reasigna o borra los comensales primero.`
+        });
+      }
+
+      db.run(`DELETE FROM tables WHERE id = ?`, [targetId], (delErr) => {
+        if (delErr) return res.status(500).json({ error: 'Error al eliminar mesa: ' + delErr.message });
+        io.emit('refresh-data');
+        res.json({ success: true, message: `Mesa ${targetId} eliminada correctamente.` });
+      });
+    });
   });
 });
 
@@ -318,15 +379,18 @@ app.post('/api/guests/create', auth, (req, res) => {
   const diet = dietary || 'Standard';
   const tagStr = tag || (diet.toLowerCase().includes('vege') ? 'Vegetarian' : 'Standard');
 
-  db.run(
-    `INSERT INTO guests (name, table_id, seat, dietary, tag, status, food_served, drink_served) VALUES (?, ?, ?, ?, ?, 'Pending', 0, 0)`,
-    [cleanName, tableId, seatNum, diet, tagStr],
-    function(err) {
-      if (err) return res.status(500).json({ error: 'Error al agregar invitado: ' + err.message });
-      io.emit('refresh-data');
-      res.json({ message: `Invitado '${cleanName}' agregado con éxito.`, guestId: this.lastID });
-    }
-  );
+  // Asegurar que la mesa exista
+  db.run(`INSERT OR IGNORE INTO tables (id, service_status, food_service, drink_service, food_type, drink_type) VALUES (?, 'Pending', 1, 0, 'Menú Estándar', 'Agua & Gaseosa')`, [tableId], () => {
+    db.run(
+      `INSERT INTO guests (name, table_id, seat, dietary, tag, status, food_served, drink_served) VALUES (?, ?, ?, ?, ?, 'Pending', 0, 0)`,
+      [cleanName, tableId, seatNum, diet, tagStr],
+      function(err) {
+        if (err) return res.status(500).json({ error: 'Error al agregar invitado: ' + err.message });
+        io.emit('refresh-data');
+        res.json({ message: `Invitado '${cleanName}' agregado con éxito.`, guestId: this.lastID });
+      }
+    );
+  });
 });
 
 // 6. Eliminar un Invitado
@@ -341,10 +405,31 @@ app.post('/api/guests/delete', auth, (req, res) => {
   });
 });
 
-// 7. Subir Excel / CSV COMPLETO
+// 6.1 Administrador: Vaciar/Eliminar TODA la lista de invitados
+app.post('/api/admin/guests/clear-all', auth, (req, res) => {
+  if (req.user.role !== 'ADMIN') return res.status(403).json({ error: 'Solo los administradores pueden vaciar la lista de invitados.' });
+
+  db.all(`SELECT * FROM guests`, (err, prevGuests) => {
+    db.run(
+      `INSERT INTO audit_logs (user_name, action, details) VALUES (?, 'CLEAR_ALL_GUESTS', ?)`,
+      [req.user.name, JSON.stringify(prevGuests || [])]
+    );
+
+    db.run(`DELETE FROM guests`, (delErr) => {
+      if (delErr) return res.status(500).json({ error: 'Error al vaciar la lista de invitados: ' + delErr.message });
+      db.run(`UPDATE tables SET service_status = 'Pending'`, () => {});
+      io.emit('refresh-data');
+      res.json({ success: true, message: 'La lista de comensales ha sido vaciada completamente.' });
+    });
+  });
+});
+
+// 7. Subir Excel / CSV (Reemplazar o Agregar)
 app.post('/api/guests/upload', auth, upload.single('file'), (req, res) => {
-  if (req.user.role !== 'ADMIN') return res.status(403).json({ error: 'Solo los administradores pueden cargar listas' });
+  if (req.user.role !== 'ADMIN') return res.status(403).json({ error: 'Solo los administradores pueden cargar listas de Excel.' });
   if (!req.file) return res.status(400).json({ error: 'No se subió ningún archivo' });
+
+  const mode = req.body.mode === 'append' ? 'append' : 'replace';
 
   try {
     const workbook = xlsx.read(req.file.buffer, { type: 'buffer', cellDates: true });
@@ -360,75 +445,89 @@ app.post('/api/guests/upload', auth, upload.single('file'), (req, res) => {
 
     db.serialize(() => {
       db.all(`SELECT * FROM guests`, (err, prevGuests) => {
-        db.run(`INSERT INTO audit_logs (user_name, action, details) VALUES (?, 'IMPORT_GUESTS', ?)`, 
-          [req.user.name, JSON.stringify(prevGuests || [])]);
+        db.run(`INSERT INTO audit_logs (user_name, action, details) VALUES (?, ?, ?)`, 
+          [req.user.name, mode === 'replace' ? 'IMPORT_REPLACE_GUESTS' : 'IMPORT_APPEND_GUESTS', JSON.stringify(prevGuests || [])]);
       });
 
-      db.run('BEGIN TRANSACTION', () => {
-        db.run(`DELETE FROM guests`, () => {
-          const stmt = db.prepare(`INSERT INTO guests (name, table_id, seat, dietary, tag, status, food_served, drink_served) VALUES (?, ?, ?, ?, ?, ?, ?, ?)`);
+      const doInsert = () => {
+        const stmt = db.prepare(`INSERT INTO guests (name, table_id, seat, dietary, tag, status, food_served, drink_served) VALUES (?, ?, ?, ?, ?, ?, ?, ?)`);
 
-          let importedCount = 0;
+        let importedCount = 0;
 
-          data.forEach((row, idx) => {
-            const rawName = getRowValue(row, ['invitado', 'nombre', 'guest', 'persona', 'nombres', 'cliente', 'asistente', 'name']);
-            if (!rawName && Object.values(row).every(val => String(val).trim() === '')) return;
+        data.forEach((row, idx) => {
+          const rawName = getRowValue(row, ['invitado', 'nombre', 'guest', 'persona', 'nombres', 'cliente', 'asistente', 'name']);
+          if (!rawName && Object.values(row).every(val => String(val).trim() === '')) return;
 
-            const guestName = rawName || `Invitado ${idx + 1}`;
+          const guestName = rawName || `Invitado ${idx + 1}`;
 
-            const rawTable = getRowValue(row, ['mesa', 'table', 'nromesa', 'nummesa']);
-            let tableNum = (idx % 20) + 1;
-            if (rawTable) {
-              const matchDigits = rawTable.match(/\d+/);
-              if (matchDigits) tableNum = parseInt(matchDigits[0]);
+          const rawTable = getRowValue(row, ['mesa', 'table', 'nromesa', 'nummesa']);
+          let tableNum = (idx % 20) + 1;
+          if (rawTable) {
+            const matchDigits = rawTable.match(/\d+/);
+            if (matchDigits) tableNum = parseInt(matchDigits[0]);
+          }
+
+          // Asegurar que la mesa exista en la tabla tables
+          db.run(`INSERT OR IGNORE INTO tables (id, service_status, food_service, drink_service, food_type, drink_type) VALUES (?, 'Pending', 1, 0, 'Menú Estándar', 'Agua & Gaseosa')`, [tableNum], () => {});
+
+          const rawSeat = getRowValue(row, ['silla', 'asiento', 'seat', 'nrosilla']);
+          let seatNum = String((idx % 10) + 1);
+          if (rawSeat) {
+            const matchSeatDigits = rawSeat.match(/\d+/);
+            if (matchSeatDigits) seatNum = String(matchSeatDigits[0]);
+            else seatNum = rawSeat;
+          }
+
+          const rawStatus = getRowValue(row, ['estado', 'status', 'asistencia', 'llegó', 'llego', 'servido']);
+          let status = 'Pending';
+          let foodServed = 0;
+          let drinkServed = 0;
+
+          if (rawStatus) {
+            const lowerSt = rawStatus.toLowerCase();
+            if (lowerSt.includes('lleg') || lowerSt.includes('check') || lowerSt.includes('presente') || lowerSt.includes('asistio') || lowerSt.includes('confirm')) {
+              status = 'In Progress';
+            } else if (lowerSt.includes('serv') || lowerSt.includes('atend') || lowerSt.includes('comio') || lowerSt.includes('completo')) {
+              status = 'Served';
+              foodServed = 1;
+              drinkServed = 1;
+            } else if (lowerSt.includes('pend') || lowerSt.includes('falt') || lowerSt.includes('no')) {
+              status = 'Pending';
+            } else {
+              status = rawStatus;
             }
+          }
 
-            const rawSeat = getRowValue(row, ['silla', 'asiento', 'seat', 'nrosilla']);
-            let seatNum = String((idx % 10) + 1);
-            if (rawSeat) {
-              const matchSeatDigits = rawSeat.match(/\d+/);
-              if (matchSeatDigits) seatNum = String(matchSeatDigits[0]);
-              else seatNum = rawSeat;
+          const rawDietary = getRowValue(row, ['dieta', 'dietary', 'menu', 'menú', 'restriccion', 'preferencia']);
+          const dietary = rawDietary || 'Standard';
+          const tag = (dietary.toLowerCase().includes('vege') ? 'Vegetarian' : (dietary.toLowerCase().includes('vega') ? 'Vegano' : 'Standard'));
+
+          stmt.run([guestName, tableNum, seatNum, dietary, tag, status, foodServed, drinkServed]);
+          importedCount++;
+        });
+
+        stmt.finalize((finalizeErr) => {
+          db.run('COMMIT', (commitErr) => {
+            if (commitErr) {
+              return res.status(500).json({ error: 'Error al confirmar la carga en la base de datos' });
             }
-
-            const rawStatus = getRowValue(row, ['estado', 'status', 'asistencia', 'llegó', 'llego', 'servido']);
-            let status = 'Pending';
-            let foodServed = 0;
-            let drinkServed = 0;
-
-            if (rawStatus) {
-              const lowerSt = rawStatus.toLowerCase();
-              if (lowerSt.includes('lleg') || lowerSt.includes('check') || lowerSt.includes('presente') || lowerSt.includes('asistio') || lowerSt.includes('confirm')) {
-                status = 'In Progress';
-              } else if (lowerSt.includes('serv') || lowerSt.includes('atend') || lowerSt.includes('comio') || lowerSt.includes('completo')) {
-                status = 'Served';
-                foodServed = 1;
-                drinkServed = 1;
-              } else if (lowerSt.includes('pend') || lowerSt.includes('falt') || lowerSt.includes('no')) {
-                status = 'Pending';
-              } else {
-                status = rawStatus;
-              }
-            }
-
-            const rawDietary = getRowValue(row, ['dieta', 'dietary', 'menu', 'menú', 'restriccion', 'preferencia']);
-            const dietary = rawDietary || 'Standard';
-            const tag = (dietary.toLowerCase().includes('vege') ? 'Vegetarian' : (dietary.toLowerCase().includes('vega') ? 'Vegano' : 'Standard'));
-
-            stmt.run([guestName, tableNum, seatNum, dietary, tag, status, foodServed, drinkServed]);
-            importedCount++;
-          });
-
-          stmt.finalize((finalizeErr) => {
-            db.run('COMMIT', (commitErr) => {
-              if (commitErr) {
-                return res.status(500).json({ error: 'Error al confirmar la carga en la base de datos' });
-              }
-              io.emit('refresh-data');
-              res.json({ message: `¡Éxito! Se importaron los ${importedCount} invitados de la lista completa.` });
-            });
+            io.emit('refresh-data');
+            const modeText = mode === 'replace' ? 'reemplazando la lista anterior' : 'agregados a los existentes';
+            res.json({ message: `¡Éxito! Se importaron ${importedCount} comensales (${modeText}).` });
           });
         });
+      };
+
+      db.run('BEGIN TRANSACTION', () => {
+        if (mode === 'replace') {
+          db.run(`DELETE FROM guests`, () => {
+            db.run(`UPDATE tables SET service_status = 'Pending'`, () => {
+              doInsert();
+            });
+          });
+        } else {
+          doInsert();
+        }
       });
     });
   } catch (err) {
