@@ -741,16 +741,20 @@
         </div>
 
         <!-- COMPONENTE DINÁMICO DEL CENTRO: NOMBRE E IMAGEN DEL EVENTO -->
-        <div class="flex flex-col items-center justify-center cursor-pointer group px-2" onclick="openEventBannerModal()" title="Personalizar Nombre e Imagen del Evento">
+        <div class="flex flex-col items-center justify-center cursor-pointer group px-2 py-0.5" onclick="openEventBannerModal()" title="Personalizar Nombre e Imagen del Evento (Clic para cambiar)">
           <div class="relative">
-            <img id="header-event-banner" src="/bg-event-1.jpg" alt="Logo Evento" class="w-10 h-10 sm:w-13 sm:h-13 rounded-full object-cover border-2 border-zolimar-gold shadow-md group-hover:scale-105 transition">
-            <span id="header-banner-edit-icon" class="absolute bottom-0 right-0 bg-zolimar-gold text-zolimar-royalDark p-0.5 rounded-full text-[8px] font-bold shadow hidden">
-              <i data-lucide="camera" class="w-3 h-3"></i>
+            <img id="header-event-banner" src="/bg-event-1.jpg" alt="Logo Evento" class="w-16 h-16 sm:w-20 sm:h-20 md:w-24 md:h-24 rounded-full object-cover border-3 border-zolimar-gold shadow-xl group-hover:scale-105 transition ring-4 ring-zolimar-gold/30">
+            <span id="header-banner-edit-icon" class="absolute bottom-0 right-0 bg-zolimar-gold text-zolimar-royalDark p-1 rounded-full text-[9px] font-extrabold shadow-lg hidden group-hover:block transition">
+              <i data-lucide="camera" class="w-3.5 h-3.5"></i>
             </span>
           </div>
-          <h1 id="header-event-name" class="font-extrabold text-[11px] sm:text-xs text-zolimar-gold tracking-wide uppercase mt-0.5 text-center max-w-[160px] sm:max-w-[280px] truncate group-hover:text-white transition">
+          <h1 id="header-event-name" class="font-black text-xs sm:text-sm md:text-base text-zolimar-gold tracking-wide uppercase mt-1 text-center max-w-[200px] sm:max-w-[360px] truncate group-hover:text-white transition drop-shadow">
             Zolimar Catering & Eventos
           </h1>
+          <span class="text-[9px] text-blue-200/80 font-semibold group-hover:text-zolimar-gold transition flex items-center space-x-0.5">
+            <i data-lucide="pencil" class="w-2.5 h-2.5"></i>
+            <span>Toca el logo para cambiar imagen</span>
+          </span>
         </div>
 
         <!-- USUARIOS Y SESIÓN -->
@@ -790,35 +794,42 @@
       <div class="bg-gradient-to-r from-zolimar-royalBlue to-zolimar-royalDark px-4 py-2.5 text-white shadow-md space-y-2">
         
         <!-- PANEL DE CONTROL DINÁMICO DE MESAS (BOTONES PARA AUMENTAR O QUITAR MESAS) -->
-        <div id="admin-table-controls-bar" class="flex flex-wrap items-center justify-between gap-2.5 bg-black/30 p-2.5 rounded-xl border border-zolimar-gold/40 shadow-inner">
+        <div id="admin-table-controls-bar" class="flex flex-wrap items-center justify-between gap-2.5 bg-black/35 p-2.5 rounded-2xl border border-zolimar-gold/50 shadow-xl">
           
           <!-- BOTONES PARA AUMENTAR O QUITAR MESAS -->
-          <div class="flex items-center space-x-2 bg-white/10 px-2.5 py-1.5 rounded-xl border border-white/20">
-            <span class="text-xs font-black text-zolimar-gold">Mesas:</span>
-            <button onclick="removeTable()" title="Quitar 1 mesa del evento" class="bg-red-600 hover:bg-red-700 text-white font-black px-2.5 py-1 rounded-lg flex items-center space-x-1 text-xs shadow-md active:scale-95 transition">
+          <div class="flex items-center space-x-1.5 bg-white/10 px-2.5 py-1.5 rounded-xl border border-white/20">
+            <span class="text-xs font-black text-zolimar-gold mr-0.5">Mesas:</span>
+            <button onclick="removeTable()" title="Quitar 1 mesa del evento" class="bg-red-600 hover:bg-red-700 text-white font-black px-2.5 py-1.5 rounded-lg flex items-center space-x-1 text-xs shadow-md active:scale-95 transition">
               <i data-lucide="minus-circle" class="w-3.5 h-3.5"></i>
               <span>Quitar Mesa</span>
             </button>
-            <button onclick="openManageTablesModal()" title="Ver o ajustar cantidad exacta de mesas" class="bg-zolimar-gold text-zolimar-royalDark px-3 py-1 rounded-lg font-black text-xs hover:bg-zolimar-goldLight transition shadow border border-amber-300 flex items-center space-x-1">
+            <button onclick="openManageTablesModal()" title="Ver o ajustar cantidad exacta de mesas" class="bg-zolimar-gold text-zolimar-royalDark px-3 py-1.5 rounded-lg font-black text-xs hover:bg-zolimar-goldLight transition shadow border border-amber-300 flex items-center space-x-1">
               <span id="dash-total-tables-badge">20</span>
               <span>Mesas ⚙️</span>
             </button>
-            <button onclick="addTable()" title="Aumentar 1 mesa al evento" class="bg-zolimar-royalBlue hover:bg-zolimar-royalDark text-zolimar-gold border-2 border-zolimar-gold font-black px-2.5 py-1 rounded-lg flex items-center space-x-1 text-xs shadow-md active:scale-95 transition">
+            <button onclick="addTable()" title="Aumentar 1 mesa al evento" class="bg-zolimar-royalBlue hover:bg-zolimar-royalDark text-zolimar-gold border-2 border-zolimar-gold font-black px-2.5 py-1.5 rounded-lg flex items-center space-x-1 text-xs shadow-md active:scale-95 transition">
               <i data-lucide="plus-circle" class="w-3.5 h-3.5 text-zolimar-gold"></i>
               <span>Aumentar Mesa</span>
             </button>
           </div>
 
-          <!-- BOTÓN DESTACADO: COMIDAS Y BEBIDAS -->
-          <div class="flex items-center space-x-2">
-            <span class="text-xs text-blue-200 font-bold hidden md:inline">👥 <span id="dash-total-guests-badge">0</span> Comensales</span>
-            <button onclick="openMenuCatalogModal()" title="Ingresar manualmente qué comidas y bebidas se servirán" class="bg-zolimar-royalBlue text-zolimar-gold border-2 border-zolimar-gold hover:bg-zolimar-royalDark font-black px-3.5 py-1.5 rounded-xl text-xs flex items-center space-x-1.5 transition shadow-lg active:scale-95">
+          <!-- BOTONES DE GESTIÓN: COMIDAS Y BEBIDAS, EXCEL, VACIAR LISTA Y REVERTIR -->
+          <div class="flex flex-wrap items-center gap-1.5 sm:gap-2">
+            <button onclick="openMenuCatalogModal()" title="Ingresar manualmente qué comidas y bebidas se servirán" class="bg-zolimar-royalBlue text-zolimar-gold border-2 border-zolimar-gold hover:bg-zolimar-royalDark font-black px-3 py-1.5 rounded-xl text-xs flex items-center space-x-1.5 transition shadow-lg active:scale-95">
               <i data-lucide="utensils-crossed" class="w-4 h-4 text-zolimar-gold"></i>
               <span>🍽️ Comidas y Bebidas</span>
             </button>
-            <button onclick="openUploadExcelModal()" title="Cargar archivo Excel de invitados" class="bg-blue-600 hover:bg-blue-700 text-white font-bold px-3 py-1.5 rounded-xl text-xs flex items-center space-x-1 transition shadow">
+            <button onclick="openUploadExcelModal()" title="Cargar archivo Excel de invitados" class="bg-blue-600 hover:bg-blue-700 text-white font-bold px-2.5 py-1.5 rounded-xl text-xs flex items-center space-x-1 transition shadow">
               <i data-lucide="file-spreadsheet" class="w-3.5 h-3.5"></i>
               <span>Excel</span>
+            </button>
+            <button onclick="openClearGuestsModal()" title="Eliminar lista completa de invitados del evento" class="bg-red-600 hover:bg-red-700 text-white font-black px-2.5 py-1.5 rounded-xl text-xs flex items-center space-x-1 transition shadow-md active:scale-95 border border-red-400">
+              <i data-lucide="trash-2" class="w-3.5 h-3.5"></i>
+              <span>Vaciar Lista</span>
+            </button>
+            <button onclick="startUndoProcess()" title="Confirmación de revertir a cero la lista / restaurar copia previa de seguridad" class="bg-amber-500 hover:bg-amber-600 text-white font-black px-2.5 py-1.5 rounded-xl text-xs flex items-center space-x-1 transition shadow-md active:scale-95 border border-amber-300">
+              <i data-lucide="rotate-ccw" class="w-3.5 h-3.5"></i>
+              <span>Revertir Lista</span>
             </button>
           </div>
         </div>
@@ -846,6 +857,12 @@
       <!-- CUADRO DE MESAS CON DISTRIBUCIÓN RESPONSIVA (GRID FLUIDO AUTO-FIT) -->
       <div class="flex-1 p-3 sm:p-4 overflow-y-auto bg-slate-50 relative min-h-[400px]">
         <div class="absolute inset-0 bg-cover bg-center opacity-[0.04] pointer-events-none" style="background-image: url('/bg-event-3.jpg');"></div>
+        
+        <!-- MARCA DE AGUA DEL LOGO DEL EVENTO EN EL CENTRO DE LA PARTE BLANCA (TAMAÑO VISIBLE) -->
+        <div class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-64 h-64 sm:w-80 sm:h-80 md:w-[380px] md:h-[380px] rounded-full overflow-hidden opacity-[0.16] pointer-events-none z-0 flex items-center justify-center border-4 border-zolimar-gold/30 shadow-2xl">
+          <img id="dashboard-watermark-logo" src="/bg-event-1.jpg" alt="Marca de Agua Logo Evento" class="w-full h-full object-cover rounded-full filter contrast-125">
+        </div>
+
         <div id="tables-grid" class="grid grid-cols-[repeat(auto-fit,minmax(130px,1fr))] sm:grid-cols-[repeat(auto-fit,minmax(150px,1fr))] gap-2.5 sm:gap-3.5 justify-items-stretch relative z-10"></div>
       </div>
     </div>
@@ -959,7 +976,7 @@
         <!-- CONTENEDOR DE LA MESA CIRCULAR INTERACTIVA CON MARCAS DE AGUA -->
         <div id="detail-table-diagram-container" class="flex-1 flex flex-col items-center justify-center p-3 sm:p-5 bg-gradient-to-b from-blue-50/60 via-slate-50 to-blue-50/60 rounded-2xl border border-blue-200/80 shadow-sm relative min-h-[460px] overflow-hidden">
           
-          <!-- MARCAS DE AGUA EN ESPACIOS VACÍOS -->
+          <!-- MARCAS DE AGUA EN ESPACIOS VACÍOS (PEQUEÑAS IMÁGENES DEL LOCAL CONSERVADAS) -->
           <div class="absolute top-2 left-1/2 -translate-x-1/2 w-56 h-24 rounded-2xl overflow-hidden opacity-[0.15] pointer-events-none border border-blue-400/30 shadow-inner z-0">
             <img src="/bg-event-3.jpg" alt="Techo y Luces Evento" class="w-full h-full object-cover">
           </div>
@@ -968,6 +985,11 @@
           </div>
           <div class="absolute right-2 top-1/2 -translate-y-1/2 w-40 h-52 rounded-2xl overflow-hidden opacity-[0.15] pointer-events-none border border-blue-400/30 shadow-inner z-0">
             <img src="/bg-event-2.jpg" alt="Piscina y Luces Zolimar" class="w-full h-full object-cover">
+          </div>
+
+          <!-- MARCA DE AGUA DEL LOGO DEL EVENTO EN EL CENTRO DE LA PARTE BLANCA (TAMAÑO VISIBLE) -->
+          <div class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-72 h-72 sm:w-88 sm:h-88 md:w-[440px] md:h-[440px] rounded-full overflow-hidden opacity-[0.20] pointer-events-none z-0 flex items-center justify-center border-4 border-zolimar-gold/30 shadow-2xl">
+            <img id="detail-watermark-logo" src="/bg-event-1.jpg" alt="Marca de Agua Logo Evento" class="w-full h-full object-cover rounded-full filter contrast-125">
           </div>
 
           <div class="w-full max-w-md flex justify-between items-center text-[11px] text-gray-700 font-bold px-2 mb-1 z-10">
@@ -2217,6 +2239,12 @@
         const reader = new FileReader();
         reader.onload = function(e) {
           document.getElementById('modal-event-banner-preview').src = e.target.result;
+        const hBanner = document.getElementById('header-event-banner');
+        const dWater = document.getElementById('detail-watermark-logo');
+        const dashWater = document.getElementById('dashboard-watermark-logo');
+        if (hBanner) hBanner.src = e.target.result;
+        if (dWater) dWater.src = e.target.result;
+        if (dashWater) dashWater.src = e.target.result;
         };
         reader.readAsDataURL(file);
       }
@@ -2282,8 +2310,12 @@
           if (nameElem && eventData.eventInfo.event_name) {
             nameElem.innerText = eventData.eventInfo.event_name;
           }
-          if (bannerElem && eventData.eventInfo.banner_url) {
-            bannerElem.src = eventData.eventInfo.banner_url;
+          if (eventData.eventInfo.banner_url) {
+            if (bannerElem) bannerElem.src = eventData.eventInfo.banner_url;
+            const detailW = document.getElementById('detail-watermark-logo');
+            const dashW = document.getElementById('dashboard-watermark-logo');
+            if (detailW) detailW.src = eventData.eventInfo.banner_url;
+            if (dashW) dashW.src = eventData.eventInfo.banner_url;
           }
         }
 
