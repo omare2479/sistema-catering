@@ -5,11 +5,12 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <title>Zolimar Catering & Eventos</title>
   
-  <script src="https://cdn.tailwindcss.com"></script>
-  <script src="https://unpkg.com/lucide@latest"></script>
+  <script src="/tailwind.js"></script>
+  <script src="/lucide-cdn.js"></script>
   <script src="/socket.io/socket.io.js"></script>
 
   <script>
+    window.tailwind = window.tailwind || {};
     tailwind.config = {
       theme: {
         extend: {
@@ -29,8 +30,12 @@
           }
         }
       }
-    }
+    };
   </script>
+  <style>
+    .hidden { display: none !important; }
+    body { margin: 0; padding: 0; font-family: system-ui, -apple-system, sans-serif; background-color: #f3f4f6; }
+  </style>
 </head>
 <body class="bg-gray-100 flex justify-center min-h-screen">
 
@@ -422,6 +427,7 @@
             <span>Guardar Invitado</span>
           </button>
         </form>
+      </div>
     </div>
 
     <!-- MODAL DE PERSONALIZACIÓN DE NOMBRE E IMAGEN DEL EVENTO -->
@@ -1537,6 +1543,9 @@
       } catch (err) {
         errDiv.innerText = err.message;
         errDiv.classList.remove('hidden');
+      }
+    }
+
     /* COMPONENTE DINÁMICO DEL CENTRO: NOMBRE E IMAGEN DEL EVENTO */
     function openEventBannerModal() {
       const modal = document.getElementById('event-banner-modal');
