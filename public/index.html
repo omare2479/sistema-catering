@@ -572,6 +572,11 @@
           <i data-lucide="check" class="w-4 h-4"></i>
           <span>Guardar Servicio</span>
         </button>
+
+        <button id="gsm-delete-guest-btn" onclick="deleteGuestFromChairModal()" type="button" class="w-full bg-red-50 hover:bg-red-100 text-red-700 border border-red-200 font-bold py-2 rounded-xl text-xs transition shadow-xs flex items-center justify-center space-x-1 mt-1.5 active:scale-95">
+          <i data-lucide="trash-2" class="w-3.5 h-3.5 text-red-600"></i>
+          <span>Borrar este Invitado (Por equivocación)</span>
+        </button>
       </div>
     </div>
 
@@ -1585,18 +1590,25 @@
       filtered.forEach(g => {
         const hasEntered = g.status === 'In Progress' || g.status === 'Checked In' || g.status === 'Served';
         const item = document.createElement('div');
-        item.className = `p-2 rounded-xl border flex items-center justify-between text-xs ${hasEntered ? 'bg-blue-50/80 border-blue-200' : 'bg-red-50/80 border-red-200'}`;
+        item.className = `p-2.5 rounded-xl border flex items-center justify-between text-xs ${hasEntered ? 'bg-blue-50/80 border-blue-200' : 'bg-red-50/80 border-red-200'} shadow-xs`;
         item.innerHTML = `
-          <div>
-            <div class="font-bold ${hasEntered ? 'text-zolimar-royalDark' : 'text-red-950'}">${escapeHtml(g.name)}</div>
-            <div class="text-[9px] text-gray-500">Mesa ${g.table_id} - Silla ${g.seat}</div>
+          <div class="flex-1 pr-2">
+            <div class="font-bold ${hasEntered ? 'text-zolimar-royalDark' : 'text-red-950'} text-xs">${escapeHtml(g.name)}</div>
+            <div class="text-[10px] text-gray-500 font-medium">Mesa ${g.table_id} - Silla ${g.seat}</div>
           </div>
-          <span class="px-2 py-0.5 rounded-full text-[9px] font-bold ${hasEntered ? 'bg-blue-200 text-zolimar-royalDark' : 'bg-red-200 text-red-900'}">
-            ${hasEntered ? 'Ingresó' : 'Falta'}
-          </span>
+          <div class="flex items-center space-x-1 sm:space-x-1.5">
+            <span class="px-2.5 py-1 rounded-lg text-[9px] font-bold ${hasEntered ? 'bg-blue-200 text-zolimar-royalDark border border-blue-300' : 'bg-red-200 text-red-900 border border-red-300'}">
+              ${hasEntered ? 'Ingresó' : 'Falta'}
+            </span>
+            <button onclick="event.stopPropagation(); deleteGuestFromReport(${g.id}, '${escapeHtml(g.name)}')" title="Borrar invitado creado por equivocación" class="bg-red-50 hover:bg-red-100 text-red-600 hover:text-red-800 border border-red-200 px-2 py-1 rounded-lg flex items-center space-x-1 shadow-xs active:scale-95 transition ml-0.5">
+              <i data-lucide="trash-2" class="w-3.5 h-3.5 text-red-600"></i>
+              <span class="text-[9px] font-black">Borrar</span>
+            </button>
+          </div>
         `;
         container.appendChild(item);
       });
+      if (window.lucide) lucide.createIcons();
     }
 
     /* INFORME 2: COMIDA & BEBIDAS */
@@ -1656,19 +1668,24 @@
       filtered.forEach(g => {
         const item = document.createElement('div');
         const isComp = g.food_served === 1 && g.drink_served === 1;
-        item.className = `p-2 rounded-xl border flex items-center justify-between text-xs ${isComp ? 'bg-slate-50 border-slate-300' : 'bg-blue-50/50 border-blue-200'}`;
+        item.className = `p-2.5 rounded-xl border flex items-center justify-between text-xs ${isComp ? 'bg-slate-50 border-slate-300' : 'bg-blue-50/60 border-blue-200'} shadow-xs`;
         item.innerHTML = `
-          <div>
-            <div class="font-bold text-gray-900">${escapeHtml(g.name)}</div>
-            <div class="text-[9px] text-gray-500">Mesa ${g.table_id} - Silla ${g.seat} (${escapeHtml(g.dietary || 'Standard')})</div>
+          <div class="flex-1 pr-2">
+            <div class="font-bold text-gray-900 text-xs">${escapeHtml(g.name)}</div>
+            <div class="text-[10px] text-gray-500 font-medium">Mesa ${g.table_id} - Silla ${g.seat} (${escapeHtml(g.dietary || 'Standard')})</div>
           </div>
-          <div class="flex items-center space-x-1.5 font-bold text-[10px]">
-            <span class="${g.food_served ? 'text-zolimar-royalBlue bg-blue-100' : 'text-gray-400 bg-gray-100'} px-1.5 py-0.5 rounded">🍲 ${g.food_served ? 'Listo' : 'Pend'}</span>
-            <span class="${g.drink_served ? 'text-blue-700 bg-blue-100' : 'text-gray-400 bg-gray-100'} px-1.5 py-0.5 rounded">🥤 ${g.drink_served ? 'Listo' : 'Pend'}</span>
+          <div class="flex items-center space-x-1 sm:space-x-1.5 font-bold text-[10px]">
+            <span class="${g.food_served ? 'text-zolimar-royalBlue bg-blue-100 border border-blue-200' : 'text-gray-400 bg-gray-100'} px-2 py-1 rounded-lg">🍲 ${g.food_served ? 'Listo' : 'Pend'}</span>
+            <span class="${g.drink_served ? 'text-blue-700 bg-blue-100 border border-blue-200' : 'text-gray-400 bg-gray-100'} px-2 py-1 rounded-lg">🥤 ${g.drink_served ? 'Listo' : 'Pend'}</span>
+            <button onclick="event.stopPropagation(); deleteGuestFromReport(${g.id}, '${escapeHtml(g.name)}')" title="Borrar invitado creado por equivocación" class="bg-red-50 hover:bg-red-100 text-red-600 hover:text-red-800 border border-red-200 px-2 py-1 rounded-lg flex items-center space-x-1 shadow-xs active:scale-95 transition ml-0.5">
+              <i data-lucide="trash-2" class="w-3.5 h-3.5 text-red-600"></i>
+              <span class="text-[9px] font-black">Borrar</span>
+            </button>
           </div>
         `;
         container.appendChild(item);
       });
+      if (window.lucide) lucide.createIcons();
     }
 
     function printReport(containerId) {
@@ -1839,6 +1856,31 @@
       } catch (err) {
         errDiv.innerText = err.message;
         errDiv.classList.remove('hidden');
+      }
+    }
+
+    async function deleteGuestFromChairModal() {
+      if (!selectedGuestForModal || !selectedGuestForModal.id) {
+        alert('No hay comensal registrado en esta silla para eliminar.');
+        return;
+      }
+      const guestName = selectedGuestForModal.name;
+      const guestId = selectedGuestForModal.id;
+      if (!confirm(`¿Eliminar a '${guestName}' de la silla? (Útil si lo agregaste por equivocación)`)) return;
+
+      try {
+        const res = await fetch('/api/guests/delete', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${authToken}` },
+          body: JSON.stringify({ guestId })
+        });
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.error);
+        closeGuestServiceModal();
+        showToast(`Invitado '${guestName}' eliminado`);
+        fetchEventData();
+      } catch (err) {
+        alert(err.message);
       }
     }
 
@@ -2057,6 +2099,33 @@
       } catch (err) {
         errDiv.innerText = err.message;
         errDiv.classList.remove('hidden');
+      }
+    }
+
+    async function deleteGuestFromReport(guestId, guestName) {
+      if (!confirm(`¿Estás seguro de borrar a '${guestName}'? (Útil si fue agregado por equivocación)`)) return;
+      try {
+        const res = await fetch('/api/guests/delete', {
+          method: 'POST',
+          headers: { 
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${authToken}`
+          },
+          body: JSON.stringify({ guestId })
+        });
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.error);
+        showToast(`Invitado '${guestName}' eliminado con éxito`);
+        await fetchEventData();
+        // Refrescar el informe abierto
+        if (!document.getElementById('food-drink-report-modal').classList.contains('hidden')) {
+          renderFoodDrinkReport();
+        }
+        if (!document.getElementById('attendance-report-modal').classList.contains('hidden')) {
+          renderAttendanceReport();
+        }
+      } catch (err) {
+        alert(err.message);
       }
     }
 
